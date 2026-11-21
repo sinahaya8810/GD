@@ -370,6 +370,11 @@ html[data-theme="mono"] body{filter:grayscale(1) contrast(1.12);}
 .ucard.stack{box-shadow:2px 2px 0 #111,5px 5px 0 #fff,7px 7px 0 #111;margin:0 5px 5px 0;}
 .ucard.stack3{box-shadow:2px 2px 0 #111,5px 5px 0 #fff,7px 7px 0 #111,10px 10px 0 #fff,12px 12px 0 #111;margin:0 10px 10px 0;}
 .ucard .cnt{position:absolute;bottom:-9px;right:-6px;background:var(--pink);color:#fff;font-weight:900;font-size:13px;border:2.5px solid #111;border-radius:999px;padding:0 7px;line-height:20px;text-shadow:1px 1px 0 #111;z-index:1;}
+.plist .ucard.placed{border-color:#ff00c8;border-width:3px;box-shadow:2px 2px 0 #ff00c8;background:#ffe3f6!important;color:#111;}
+.plist .ucard.placed .us{color:#555!important;}
+.plist .ucard.placed.rr9,.plist .ucard.placed.rr8{border-color:#ff00c8!important;box-shadow:0 0 10px 2px #ffd700,2px 2px 0 #ff00c8!important;}
+.plist .ucard.placed.stack{box-shadow:2px 2px 0 #ff00c8,5px 5px 0 #fff,7px 7px 0 #111;}
+.plist .ucard.placed.stack3{box-shadow:2px 2px 0 #ff00c8,5px 5px 0 #fff,7px 7px 0 #111,10px 10px 0 #fff,12px 12px 0 #111;}
 .ucard.sel{background:#fff3b0;outline:3px solid var(--pink);outline-offset:1px;}
 .rr4,.gcard.rr4{background:#fff7da}.rr5,.gcard.rr5{background:#ffe6e6}.rr6,.gcard.rr6{background:#ffe5fa}.rr7,.gcard.rr7{background:linear-gradient(135deg,#ffe6e6,#fff6cf,#e3ffe3,#e2f3ff,#f1e6ff);}
 /* gacha */
@@ -791,6 +796,7 @@ function gridHTML(pts,cls){
   return h+'</div>';
 }
 function rbHTML(r,plus){const t=RAR[r].n+(plus?'+':'');return `<span class="rb rb${r}${plus?' plus':''}" data-t="${t}">${t}</span>`;}
+function groupKey2(u){const pl=S.form.indexOf(u.uid);return groupKey(u)+'|'+(pl>=0?'slot'+pl:'free');}
 function groupKey(u){const k=stkOf(u);return u.r+'|'+(u.bonus||0)+'|'+u.pts.join(',')+'|'+(u.lock?1:0)+'|'+(k?k.type+k.r:'');}
 const SORTS=[
  {id:'rar',n:'レア順',f:(s,u)=>u.r*1000+sum(u.pts)},
@@ -805,7 +811,8 @@ const SORTS=[
 ];
 function groupUnits(){
   const m=new Map();
-  S.units.forEach(u=>{const k=groupKey(u);if(!m.has(k))m.set(k,[]);m.get(k).push(u);});
+  // 設置済みのキャラは1体ずつ（枠ごと）に分け、未設置のキャラだけを重ねる
+  S.units.forEach(u=>{const pl=S.form.indexOf(u.uid),k=groupKey2(u);if(!m.has(k))m.set(k,[]);m.get(k).push(u);});
   const gs=[...m.values()];
   gs.forEach(g=>g.sort((a,b)=>(S.form.includes(a.uid)-S.form.includes(b.uid))||a.uid-b.uid));
   const so=SORTS.find(x=>x.id===S.sort)||SORTS[0];
@@ -816,12 +823,12 @@ function groupUnits(){
 function cardHTML(g){
   const u=g[0],r=u.r,n=g.length,pl=g.filter(x=>S.form.includes(x.uid)).length,sel=g.some(x=>x.uid===selUid);
   const plTxt=pl?(n===1?`<i>壁${(S.form.indexOf(u.uid)/3|0)+1}</i>`:`<i>配置${pl}</i>`):'';
-  return `<div class="ucard rr${r}${sel?' sel':''}${n>1?' stack':''}${n>2?' stack3':''}" data-uid="${u.uid}" data-g="${groupKey(u)}">${rbHTML(r,u.bonus>0)}${stkOf(u)?stkHTML(stkOf(u),'cs'):''}${gridHTML(u.pts,'sm')}${u.lock?'<span class="lkc">🔒</span>':''}<div class="us">${sum(u.pts)}/${maxPts(u)} ${plTxt}</div>${n>1?`<div class="cnt">×${n}</div>`:''}</div>`;
+  return `<div class="ucard rr${r}${sel?' sel':''}${pl?' placed':''}${n>1?' stack':''}${n>2?' stack3':''}" data-uid="${u.uid}" data-g="${groupKey2(u)}">${rbHTML(r,u.bonus>0)}${stkOf(u)?stkHTML(stkOf(u),'cs'):''}${gridHTML(u.pts,'sm')}${u.lock?'<span class="lkc">🔒</span>':''}<div class="us">${sum(u.pts)}/${maxPts(u)} ${plTxt}</div>${n>1?`<div class="cnt">×${n}</div>`:''}</div>`;
 }
 function toast(msg,cls){const d=document.createElement('div');d.className='tst '+(cls||'');d.textContent=msg;$('#toast').appendChild(d);setTimeout(()=>d.remove(),2200);while($('#toast').children.length>3)$('#toast').firstChild.remove();}
 let modalOpen=false,modalActs={};
 function openModal(html,acts){ $('#mbox').innerHTML=html; modalActs=acts||{}; $('#modal').classList.add('on'); modalOpen=true; }
-function closeModal(){ $('#modal').classList.remove('on'); modalOpen=false; modalActs={}; }
+function closeModal(){ if(window._needRefresh){window._needRefresh=0;setTimeout(()=>refreshCanvas(),0);} $('#modal').classList.remove('on'); modalOpen=false; modalActs={}; }
 $('#modal').addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');
   if(a){ const f=modalActs[a.dataset.act]; if(f) f(a); else if(a.dataset.act==='close') closeModal(); return; }
@@ -1426,7 +1433,7 @@ function openLite(){
   const info=['すべての演出を表示','背景と敵の絵を1回だけ描いて使い回す。ZRの光のぼかしを省略。倍速中は演出を少し短く','ダメージ数字は同じ敵の分をまとめて表示。破片・煙は半分、グラデーションや影を省略、画面の細かさを下げる','ダメージ数字・破片・エフェクトをほぼなしに。大きな演出（K.O.・CRASHなど）だけ残す。画面の細かさも最小'];
   const acts={back:()=>openMenu()};
   openModal(`<h3>⚡ 軽量モード</h3><div class="mut" style="text-align:center;font-size:12px">倍速で敵が多いときにカクつくなら試してね。<br>見た目だけが変わり、敵の強さや攻撃の当たり方はどのモードでも同じです</div>
-   <div class="ltList">${[0,1,2,3].map(i=>{acts['l'+i]=()=>{S.lite=i;save();bgKey='';resize();toast(i?`⚡ 軽量モード ON（${LITE_N[i]}）`:'軽量モード OFF');openLite();};
+   <div class="ltList">${[0,1,2,3].map(i=>{acts['l'+i]=()=>{S.lite=i;save();window._needRefresh=1;refreshCanvas();toast(i?`⚡ 軽量モード ON（${LITE_N[i]}）`:'軽量モード OFF');openLite();};
      return `<button class="ltItem ${LT()===i?'on':''}" data-act="l${i}"><b>${i?'ON・'+LITE_N[i]:'OFF'}</b><small>${info[i]}</small></button>`;}).join('')}</div>
    <div class="mbtns"><button class="btn" data-act="back">◀ メニュー</button><button class="btn" data-act="close">閉じる</button></div>`,acts);
 }
@@ -2243,7 +2250,7 @@ function openPicker(k){
    <div class="mut" style="font-size:12px;text-align:center">${inBattle?'⚔ 戦闘中は、未配置のキャラを空いている枠に置くことだけできます':'配置中のキャラを選ぶと入れ替えになります'}</div>
    <div class="mbtns">${cur!=null&&!inBattle?'<button class="btn p" data-act="rm">外す</button>':''}<button class="btn" data-act="cl">閉じる</button></div>`,
   {rm:()=>{S.form[k]=null;B.def[k]=null;save();closeModal();B.selSlot=-1;renderBattleUI();},cl:()=>{closeModal();B.selSlot=-1;},_bgf:()=>{closeModal();B.selSlot=-1;}});
-  $('#pList').addEventListener('click',e=>{const c=e.target.closest('.ucard');if(!c)return;const g=gs.find(x=>groupKey(x[0])===c.dataset.g);const free=g.find(x=>!S.form.includes(x.uid));if(B.mode==='run'&&(!free||S.form[k]!=null))return;const uid=(free||g[0]).uid;openUnitPreview(uid,k,()=>openPicker(k));});
+  $('#pList').addEventListener('click',e=>{const c=e.target.closest('.ucard');if(!c)return;const g=gs.find(x=>groupKey2(x[0])===c.dataset.g);const free=g.find(x=>!S.form.includes(x.uid));if(B.mode==='run'&&(!free||S.form[k]!=null))return;const uid=(free||g[0]).uid;openUnitPreview(uid,k,()=>openPicker(k));});
 }
 
 /* ================= RENDER ================= */
@@ -2251,6 +2258,8 @@ function openPicker(k){
 const LITE_N=['OFF','小','中','大'];
 function LT(){return (S&&S.lite)||0;}
 const cv=$('#cv');let ctx=cv.getContext('2d');let bgC=null,bgKey='';let CW=0,CH=0,cs=40,ox=0,oy=0,dpr=1,dotPat=null;
+// 画面の作り直し（軽量モード切替・メニューを閉じた時など。×4中でもぼやけが残らないよう数回やり直す）
+function refreshCanvas(){const go=()=>{if(curTab!=='battle')return;bgKey='';_spr.clear();CW=0;resize();renderBattleUI();};go();[80,300,800].forEach(t=>setTimeout(go,t));}
 function wantDpr(){return Math.min([2.5,2,1.5,1][LT()],window.devicePixelRatio||1);}
 function resize(){
   const r=$('#cwrap').getBoundingClientRect();if(r.width<10)return;
@@ -2267,7 +2276,7 @@ function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h
 const X=v=>ox+v*cs,Y=v=>oy+v*cs;
 function render(){
   // 画面の細かさがモードとずれていたら作り直す（ぼやけ防止）
-  if(Math.abs(wantDpr()-dpr)>0.01||cv.width!==Math.round(CW*dpr)||cv.style.width!==CW+'px'){resize();if(!CW)return;}
+  if(Math.abs(wantDpr()-dpr)>0.01||cv.width!==Math.round(CW*dpr)||cv.height!==Math.round(CH*dpr)||cv.style.width!==CW+'px'||cv.style.height!==CH+'px'){resize();if(!CW)return;}
   ctx.setTransform(dpr,0,0,dpr,0,0);ctx.imageSmoothingEnabled=true;ctx.clearRect(0,0,CW,CH);
   ctx.save();if(B.shake>0)ctx.translate(rnd(-1,1)*B.shake,rnd(-1,1)*B.shake);
   drawField();drawZones();drawWalls();drawRange();
