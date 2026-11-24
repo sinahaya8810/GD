@@ -173,7 +173,9 @@ nav button{font-size:12px;}
 @keyframes bfail{30%{transform:translateX(-12px) rotate(-20deg)}60%{transform:translateX(12px) rotate(20deg)}100%{transform:translate(60px,40px) rotate(120deg);opacity:.25}}
 .stName{cursor:pointer;}
 .stMore{display:inline-block;font-size:11px;background:#fff;border:2px solid #111;border-radius:999px;padding:0 6px;vertical-align:middle;box-shadow:1.5px 1.5px 0 #111;}
-.wlist{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;overflow-y:auto;min-height:0;padding:2px 4px 6px;}
+.wlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:58px;align-content:start;gap:14px 12px;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1 1 auto;padding:6px 8px 14px;}
+.wlist .wbtn{height:58px;}
+.evTile{flex-shrink:0;}
 .wbtn{position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:6px;padding:10px 12px;border:2.5px solid #111;border-radius:12px;background:#fff;box-shadow:2px 2px 0 #111;font-weight:900;font-size:15px;cursor:pointer;}
 .wbtn span{font-size:13px;z-index:1;} .wbtn b{z-index:1;}
 .wbtn i{position:absolute;left:0;bottom:0;height:5px;background:var(--grn);}
@@ -672,7 +674,7 @@ const DIFF={
   countPerWave:0.6     // 1Waveごとの敵数増加
 };
 const WORLD_SIZE=15;
-const MAX_STAGE=150;   // ← ここを増やすだけでステージ追加！（150 = 10-15まで）
+const MAX_STAGE=1500;  // ← ここを増やすだけでステージ追加！（1500 = 100-15まで）
 const STAGE_EDIT={
   // '1-15':{hp:1.2},
 };
@@ -680,13 +682,20 @@ const STAGE_EDIT={
 const ELEM_STEP=30;   // 何ステージごとに1種類増えるか（30 = 2ステージ分ごと → ステージ9から5種類）
 function elemKinds(s){return Math.min(5,1+Math.floor(s/ELEM_STEP));}
 // 属性持ちの敵の割合：5-1までは50%、そこから増えていき ステージ10（10-1）で100%
+// 11-1以降（ステージ番号150〜）はゆるやかに強くし、そのぶん敵の数で難しくする
+// 50-1以降のボスラッシュ：毎Waveボス1体、ボスWaveは per ワールドごとに+1体（最大 max 体追加）
+const BOSS_RUSH={from:735, per:10, max:6};
+const LATE={from:150, hpPerStage:0.006, countPerStage:0.03, maxCount:70};
+// 敵のデザイン：10-1〜, 20-1〜, 30-1〜, 40-1〜, 50-1〜 で見た目が変わる
+function enemyTier(s){const w=Math.floor(s/WORLD_SIZE)+1;return w<10?0:w<20?1:w<30?2:w<40?3:w<50?4:5;}
+const TIER_N=['ノーマル','メカ','ゴースト','クリスタル','デビル','コズミック'];
 const ELEM_RATE={from:60,to:135,min:0.5};
-function elemRate(s){return s<=ELEM_RATE.from?ELEM_RATE.min:Math.min(1,ELEM_RATE.min+(1-ELEM_RATE.min)*(s-ELEM_RATE.from)/(ELEM_RATE.to-ELEM_RATE.from));}
+function elemRate(s){if(s>=LATE.from-15)return 0.7+0.3*((s%WORLD_SIZE)/(WORLD_SIZE-1));return s<=ELEM_RATE.from?ELEM_RATE.min:Math.min(1,ELEM_RATE.min+(1-ELEM_RATE.min)*(s-ELEM_RATE.from)/(ELEM_RATE.to-ELEM_RATE.from));}
 function stageInfo(s){
   const w=Math.floor(s/WORLD_SIZE)+1,i=s%WORLD_SIZE,name=w+'-'+(i+1),ed=STAGE_EDIT[name]||{};
   const mainEl=ed.el!=null?ed.el:s%5,nk=ed.kinds||elemKinds(s),els=[mainEl];for(let k=1;k<nk;k++)els.push((mainEl+k)%5);
   return {name,world:w,els,el:mainEl,waves:ed.waves||(i<5?10:i<10?20:30),
-    hpMul:Math.pow(1+DIFF.hpPerStage*s,DIFF.hpCurve)*Math.pow(DIFF.worldHpMul,w-1)*(ed.hp||1),
+    hpMul:Math.pow(1+DIFF.hpPerStage*Math.min(s,LATE.from),DIFF.hpCurve)*Math.pow(DIFF.worldHpMul,Math.min(w,LATE.from/WORLD_SIZE+1)-1)*(1+LATE.hpPerStage*Math.max(0,s-LATE.from))*(ed.hp||1),
     spMul:(1+DIFF.speedMax*(1-Math.exp(-s/DIFF.speedScale)))*(ed.speed||1),
     segHp:Math.round(ENEMY_BASE.segHp+DIFF.segHpPerStage*s),breakers:s>=1};
 }
@@ -745,20 +754,20 @@ function UN(uid){return S.units.find(u=>u.uid===uid);}
 function RR(u){return u.r;}
 /* ===== シール =====  v(r)：レアリティ r（0=N … 9=ZR）ごとの効果量 */
 const STKS=[
- {id:'atk',  n:'パワー',    ic:'⚔', v:r=>5+r*3,   d:v=>`攻撃力 +${v}%`},
- {id:'spd',  n:'スピード',  ic:'⚡', v:r=>5+r*3,   d:v=>`攻撃速度 +${v}%`},
- {id:'rng',  n:'ロング',    ic:'🎯', v:r=>4+Math.round(r*2.5), d:v=>`射程 +${v}%`},
- {id:'cheer',n:'おうえん',  ic:'📣', v:r=>4+r*2,   d:v=>`同じ壁の味方の攻撃力 +${v}%`},
- {id:'chain',n:'れんさ',    ic:'🔗', v:r=>50+r*4,  d:(v,r)=>`連鎖 +${chainN(r)}（次の敵に ${v}% ダメージ）`},
- {id:'guard',n:'ほきょう',  ic:'🧱', v:r=>10+r*6,  d:v=>`となりの壊せる壁の耐久 +${v}%`},
- {id:'crit', n:'かいしん',  ic:'💥', v:r=>5+r*3,   d:v=>`${v}% の確率で会心（ダメージ2倍）`},
- {id:'elem', n:'とっこう',  ic:'🔥', v:r=>8+r*4,   d:v=>`属性特効ダメージ +${v}%`},
- {id:'eff',  n:'あしどめ',  ic:'✨', v:r=>3+r*2,   d:v=>`足止めの発動率 +${v}%`},
- {id:'boss', n:'ボスキラー',ic:'👑', v:r=>10+r*6,  d:v=>`ボスへのダメージ +${v}%`},
- {id:'coin', n:'きんうん',  ic:'🪙', v:r=>8+r*4,   d:v=>`敵を倒した時のコイン +${v}%`},
+ {id:'atk',  n:'パワー',    ic:'⚔', v:r=>8+r*5,   d:v=>`攻撃力 +${v}%`},
+ {id:'spd',  n:'スピード',  ic:'⚡', v:r=>8+r*5,   d:v=>`攻撃速度 +${v}%`},
+ {id:'rng',  n:'ロング',    ic:'🎯', v:r=>6+r*4,   d:v=>`射程 +${v}%`},
+ {id:'cheer',n:'おうえん',  ic:'📣', v:r=>6+r*4,   d:v=>`同じ壁の味方の攻撃力 +${v}%`},
+ {id:'chain',n:'れんさ',    ic:'🔗', v:r=>60+r*3,  d:(v,r)=>`連鎖 +${chainN(r)}回（次の敵に ${v}% ダメージ）`},
+ {id:'guard',n:'ほきょう',  ic:'🧱', v:r=>20+r*12, d:v=>`となりの壊せる壁の耐久 +${v}%`},
+ {id:'crit', n:'かいしん',  ic:'💥', v:r=>8+r*5,   d:v=>`${v}% の確率で会心（ダメージ2倍）`},
+ {id:'elem', n:'とっこう',  ic:'🔥', v:r=>12+r*7,  d:v=>`属性特効ダメージ +${v}%`},
+ {id:'eff',  n:'あしどめ',  ic:'✨', v:r=>5+r*3,   d:v=>`足止めの発動率 +${v}%`},
+ {id:'boss', n:'ボスキラー',ic:'👑', v:r=>15+r*10, d:v=>`ボスへのダメージ +${v}%`},
+ {id:'coin', n:'きんうん',  ic:'🪙', v:r=>12+r*6,  d:v=>`敵を倒した時のコイン +${v}%`},
 ];
 const STKD={};STKS.forEach(t=>STKD[t.id]=t);
-function chainN(r){return 1+(r>=4?1:0)+(r>=8?1:0);}
+function chainN(r){return r+1;}   // N=1回 … ZR=10回
 function stkOf(u){return u?S.stk.find(x=>x.on===u.uid)||null:null;}
 function stkVal(k){return STKD[k.type].v(k.r);}
 function stkText(k){return STKD[k.type].d(stkVal(k),k.r);}
@@ -909,11 +918,12 @@ function autoAlloc(u){
   const order=[0,el,2,el,0,1,el,3,0,el,2,1];
   for(let k=sum(u.pts),i=0;k<maxPts(u)&&i<999;i++){const c=order[i%order.length];if(u.pts[c]<CELLMAX){u.pts[c]++;k++;}else if(u.pts.every(v=>v>=CELLMAX))break;}
 }
-const BALL_BASE=[10,20,30,40,50,60,70,80,90,100];
+const BALL_BASE=[15,25,35,45,55,65,75,85,95,100];
 function ballName(br){return br==='gm'?'GM':RAR[br].n;}
-function ballChance(br,cr,k){if(br==='gm')return 1;return BALL_BASE[br]/100*Math.pow(BALL_DECAY,Math.max(0,cr-br))*Math.pow(BALL_DECAY,k);}
+function ballChance(br,cr,k){if(br==='gm')return 1;if(br===RAR.length-1)k=Math.max(0,k-1);   // ZRボールは2回目も100%
+  return BALL_BASE[br]/100*Math.pow(BALL_DECAY,Math.max(0,cr-br))*Math.pow(BALL_DECAY,k);}
 const BALL_GAIN=2;   // 成功1回で増える塗り回数
-const BALL_DECAY=0.75; // もう一度・レアリティ差1段階ごとに成功率 ×0.75（1/4ずつ減る）
+const BALL_DECAY=0.8;  // もう一度・レアリティ差1段階ごとに成功率 ×0.8
 function pctTxt(p){p*=100;return p>=10?p.toFixed(0)+'%':p>=1?p.toFixed(1)+'%':p>=0.01?p.toFixed(2)+'%':'0.01%未満';}
 const PEEL=100;
 function openStk(u){
@@ -953,7 +963,7 @@ function ballSelect(u,reset){
   const gmRow=S.gmBall>0?`<button class="btn sm" data-act="bgm" style="display:flex;align-items:center;gap:8px;width:100%;background:#e6ffe6">${ballHTML('gm')}<span class="rb gmb">GM</span><span style="flex:1;text-align:left">×${S.gmBall}</span><span style="font-size:12px">成功率 <b>100%（ずっと）</b></span></button>`:'';
   openModal(`<h3>🎨 ペイントボールを使う</h3>
    <div style="text-align:center;font-weight:700;font-size:13px">${rbHTML(u.r)} キャラ（基本の塗り ${RAR[u.r].p}回${reset?` ／ <b style="color:var(--pink)">いまの ✚${u.bonus} はリセットされます</b>`:''}）<br>
-   <span class="mut">成功すると塗り回数 +${BALL_GAIN}。成功するたびに「もう一度」挑戦できます（成功率は毎回 1/4 ずつ下がる）。<b>失敗するとそれまでに増えた分はすべて消えます。</b><br>キャラよりレアリティが低いボールは、1段階差ごとに成功率が 1/4 ずつ下がります。</span></div>
+   <span class="mut">成功すると塗り回数 +${BALL_GAIN}。成功するたびに「もう一度」挑戦できます（成功率は毎回少しずつ下がる。ZRボールは2回目まで100%）。<b>失敗するとそれまでに増えた分はすべて消えます。</b><br>キャラよりレアリティが低いボールは、1段階差ごとに成功率が下がります。</span></div>
    <div style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;min-height:0">${gmRow}${rows}</div>
    <div class="mbtns"><button class="btn" data-act="close">閉じる</button></div>`,acts);
 }
@@ -1050,7 +1060,7 @@ function renderGacha(){
   ${bm||sm?'':`<div class="tgl">自動売却 <button class="btn sm ${S.autoSell>=0?'g':''}" id="swAuto">${['OFF','Nのみ','R以下','SR以下'][S.autoSell+1]}</button></div>`}
   <div class="mut" style="font-size:12px;text-align:center">チケットはクエスト・ステージ初クリア・敵ドロップで手に入ります</div>
   ${sm?`<div class="stkGuide"><b>シールの種類</b>（レア度が高いほど効果アップ）${STKS.map(t=>`<div>${stkHTML({type:t.id,r:4})} <b>${t.n}</b>：${t.d(`${t.v(0)}〜${t.v(9)}`,9)}</div>`).join('')}</div>`:''}
-  ${bm?'<div class="mut" style="font-size:12px;text-align:center">ボールを使うと確率で塗り回数 +2。成功するたびにもう一度挑戦できます<br>初回成功率：N 10% → R 20% … GR 90% → ZR 100%</div>':''}`;
+  ${bm?'<div class="mut" style="font-size:12px;text-align:center">ボールを使うと確率で塗り回数 +2。成功するたびにもう一度挑戦できます<br>初回成功率：N 15% → R 25% … GR 95% → ZR 100%（ZRは2回目も100%）</div>':''}`;
 }
 let gmPress=null,gmFired=false,gmOK=false;
 $('#gBox').addEventListener('pointerdown',e=>{const t=e.target.closest('[data-gm]');if(!t)return;gmFired=false;clearTimeout(gmPress);gmPress=setTimeout(()=>{gmFired=true;if(navigator.vibrate)navigator.vibrate(30);gmOK?openGM():askGM();},800);});
@@ -1482,6 +1492,7 @@ const QUESTS=[
  {id:'stkZR',t:'伝説のシール',d:'ZRのシールを手に入れる',p:()=>[S.stk.some(k=>k.r>=9)?1:0,1],rw:{l:1}},
  {id:'fuse1',t:'合成マスター',d:'ボールかシールを1回合成する',p:()=>[S.st.fuse||0,1],rw:{t:3}},
  {id:'fuse30',t:'錬金術師',d:'ボール・シールを累計30回合成する',p:()=>[S.st.fuse||0,30],rw:{t:10,c:3000}},
+ {id:'wall30',t:'絶対防壁',d:'壁の強化をLv30にする',p:()=>[S.wallLv||0,30],rw:{l:2,t:30},fixed:1},
  {id:'wall10',t:'難攻不落の城',d:'壁の強化をLv10にする',p:()=>[S.wallLv||0,10],rw:{t:10,c:5000}},
  {id:'atk10',t:'底力',d:'全キャラ攻撃力アップをLv10にする',p:()=>[S.atkLv||0,10],rw:{t:5}},
  {id:'m12',t:'極振りの境地',d:'1つのマスを12回塗る（Lv.12）',p:()=>[S.st.cell12,1],rw:{c:2000}},
@@ -1581,32 +1592,36 @@ function genEventWave(w){
   B.info.el=el;
   return q;
 }
-function evCoinMul(){return EVENT.coinMul*(1+EVENT.coinStep*(B.wave-1));}
+function evCoinMul(){return EVENT.coinMul*(1+EVENT.coinStep*(B.wave-1))*(B.rule&&B.rule.id==='coin'?10:1);}
 // イベントの特殊ルール（ルーレットで1つ決まる。全キャラに反映）
+const EVMAX=60;   // イベントのMAXルールは「60回塗った」扱い（通常は30までの上限突破）
 const EV_RULES=[
- {id:'rng', w:'射程\nMAX', n:'射程MAX',     col:'#3fc5ff',d:'全キャラの射程が「射程」を30回塗ったのと同じに',f:(s,u)=>{s.rng=Math.max(s.rng,1.4+CELLMAX*0.12);}},
- {id:'atk', w:'攻撃\nMAX', n:'攻撃力MAX',   col:'#ff4d6d',d:'全キャラの攻撃力が「攻」を30回塗ったのと同じに',f:(s,u)=>{s.atk=Math.max(s.atk,Math.round((8+u.r*2+CELLMAX*4)*atkMul()*(1+B.buff.atk/100)));}},
- {id:'spd', w:'速度\nMAX', n:'攻撃速度MAX', col:'#b6ff7a',d:'全キャラの攻撃速度が「速」を30回塗ったのと同じに',f:s=>{s.itv=Math.min(s.itv,1.2/(1+CELLMAX*0.1)/(1+B.buff.spd/100));}},
- {id:'eff', w:'妨害\nMAX', n:'妨害MAX',     col:'#d6b6ff',d:'全キャラの足止めが「効」を30回塗ったのと同じに',f:s=>{s.eff=Math.max(s.eff,Math.min(0.95,CELLMAX*0.03));s.fxLv=Math.max(s.fxLv,CELLMAX);}},
- ...EL.map((e,i)=>({id:'el'+i,w:`${e.s}特効\nMAX`,n:`${e.n}特効MAX`,col:e.c,d:`全キャラの${e.n}特効が30回塗ったのと同じに`,f:s=>{s.el[i]=Math.max(s.el[i],Math.round(CELLMAX*9*atkMul()*(1+B.buff.elem/100)));}})),
- {id:'wall',w:'壁\n×100',n:'壁の強度100倍',col:'#ff9a5e',d:'壊せる壁の耐久が100倍！（いつかは壊れる）',f:()=>{},start:()=>B.segs.forEach(sg=>{sg.max*=100;sg.hp=sg.max;})},
+ {id:'rng', w:'射程\nMAX', n:'射程MAX',     col:'#3fc5ff',d:'全キャラの射程が「射程」を60回塗ったのと同じに（上限突破！）',f:(s,u)=>{s.rng=Math.max(s.rng,1.4+EVMAX*0.12);}},
+ {id:'atk', w:'攻撃\nMAX', n:'攻撃力MAX',   col:'#ff4d6d',d:'全キャラの攻撃力が「攻」を60回塗ったのと同じに（上限突破！）',f:(s,u)=>{s.atk=Math.max(s.atk,Math.round((8+u.r*2+EVMAX*4)*atkMul()*(1+B.buff.atk/100)));}},
+ {id:'spd', w:'速度\nMAX', n:'攻撃速度MAX', col:'#b6ff7a',d:'全キャラの攻撃速度が「速」を60回塗ったのと同じに（上限突破！）',f:s=>{s.itv=Math.min(s.itv,1.2/(1+EVMAX*0.1)/(1+B.buff.spd/100));}},
+ {id:'eff', w:'妨害\nMAX', n:'妨害MAX',     col:'#d6b6ff',d:'全キャラの足止めが「効」を60回塗ったのと同じに（上限突破！）',f:s=>{s.eff=Math.max(s.eff,Math.min(0.95,EVMAX*0.03));s.fxLv=Math.max(s.fxLv,EVMAX);}},
+ ...EL.map((e,i)=>({id:'el'+i,w:`${e.s}特効\nMAX`,n:`${e.n}特効MAX`,col:e.c,wt:0.7,d:`全キャラの${e.n}特効が60回塗ったのと同じに（上限突破！）`,f:s=>{s.el[i]=Math.max(s.el[i],Math.round(EVMAX*9*atkMul()*(1+B.buff.elem/100)));}})),
+ {id:'wall',w:'壁\n×1000',n:'壁の強度1000倍',col:'#ff9a5e',d:'壊せる壁の耐久が1000倍！（いつかは壊れる）',f:()=>{},start:()=>B.segs.forEach(sg=>{sg.max*=1000;sg.hp=sg.max;})},
+ {id:'coin',w:'コイン\n1000%',n:'コイン1000%',col:'#ffd700',wt:0.25,d:'もらえるコインが10倍！！（超レア）',f:()=>{}},
  {id:'chain',w:'連鎖\n+10',n:'連鎖+10',    col:'#7ff0ff',d:'全キャラの攻撃が10回まで次の敵へ連鎖する',f:s=>{s.chain=(s.chain||0)+10;s.chainF=Math.max(s.chainF||0,0.7);}},
 ];
 // どのステージでもクリアすると確率でキンキラ挑戦チケット（初クリアは確率アップ）
 const EV_DROP={first:0.25, repeat:0.1};
 function eventRoulette(onDone){
   const N=EV_RULES.length;let pick=-1;
+  const wts=EV_RULES.map(r=>r.wt||1),wsum=wts.reduce((a,b)=>a+b,0),spn=wts.map(w=>w/wsum*Math.PI*2),sa=[];spn.reduce((a,v,i)=>{sa[i]=a;return a+v;},0);
+  const segAt=x=>{for(let i=0;i<N;i++)if(x>=sa[i]&&x<sa[i]+spn[i])return i;return N-1;};
   const ov=document.createElement('div');ov.id='spin';ov.innerHTML='<canvas></canvas><div class="spHint">タップしてルーレットを止めよう！</div>';document.body.appendChild(ov);
   const hint=ov.querySelector('.spHint');
   const cvs=ov.querySelector('canvas'),c=cvs.getContext('2d');let W,H,dp;const fit=()=>{dp=Math.min(2.5,devicePixelRatio||1);W=innerWidth;H=innerHeight;cvs.width=W*dp;cvs.height=H*dp;cvs.style.width=W+'px';cvs.style.height=H+'px';};fit();
-  const seg=Math.PI*2/N,V0=11;
+  const V0=11;
   let t=0,ang=0,phase='spin',st=0,a0=0,target=0,D=0,lastSeg=-1,done=false,endT=0,shake=0,tick=[],lt=performance.now();
   const comic=(txt,x,y,size,col,rot)=>{c.save();c.translate(x,y);c.rotate(rot||0);c.font=font(size);c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=size*0.24;c.strokeStyle='#111';c.strokeText(txt,3,3);c.strokeText(txt,0,0);c.fillStyle=col;c.fillText(txt,0,0);c.restore();};
   const finish=()=>{if(done)return;done=true;ov.classList.add('out');setTimeout(()=>{ov.remove();onDone(EV_RULES[pick]);},220);};
   ov.addEventListener('pointerdown',()=>{
-    if(phase==='spin'){phase='slow';pick=Math.random()*N|0;a0=ang;st=0;
+    if(phase==='spin'){phase='slow';{let x=Math.random()*wsum;pick=0;for(let i=0;i<N;i++){x-=wts[i];if(x<0){pick=i;break;}}}a0=ang;st=0;
       // 今の角度から、選ばれたマスの位置まで最低1.5周以上回って止まる
-      const want=Math.PI*2-(pick+0.5)*seg+(Math.random()-0.5)*seg*0.6;let d=want-(a0%(Math.PI*2));while(d<Math.PI*3)d+=Math.PI*2;target=a0+d;
+      const want=Math.PI*2-(sa[pick]+spn[pick]/2)+(Math.random()-0.5)*spn[pick]*0.6;let d=want-(a0%(Math.PI*2));while(d<Math.PI*3)d+=Math.PI*2;target=a0+d;
       D=S.skipFx?0.9:2*d/V0;hint.textContent='とまれ〜〜っ！';hint.classList.add('hot');}
     else if(phase==='done'&&endT>0.5)finish();});
   (function loop(n){if(done)return;const dt=Math.min(0.05,(n-lt)/1000);lt=n;t+=dt;if(W!==innerWidth||H!==innerHeight)fit();
@@ -1621,14 +1636,15 @@ function eventRoulette(onDone){
     comic('キンキラ★ルーレット',W/2,cy-R-60,Math.max(24,R*0.16),'#ff5c8a',-0.05);
     c.save();c.translate(cx,cy);c.fillStyle='#111';c.beginPath();c.arc(6,6,R+8,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(0,0,R+8,0,7);c.fill();c.lineWidth=3;c.strokeStyle='#111';c.stroke();
     c.rotate(ang);
-    for(let i=0;i<N;i++){const s0=-Math.PI/2+i*seg;c.beginPath();c.moveTo(0,0);c.arc(0,0,R,s0,s0+seg);c.closePath();c.fillStyle=EV_RULES[i].col;c.fill();c.lineWidth=2.5;c.strokeStyle='#111';c.stroke();
+    for(let i=0;i<N;i++){const s0=-Math.PI/2+sa[i],seg=spn[i];c.beginPath();c.moveTo(0,0);c.arc(0,0,R,s0,s0+seg);c.closePath();c.fillStyle=EV_RULES[i].col;c.fill();c.lineWidth=2.5;c.strokeStyle='#111';c.stroke();
       if(phase==='done'&&i===pick){c.fillStyle=`rgba(255,255,255,${0.35+0.3*Math.sin(t*14)})`;c.fill();}
-      c.save();c.rotate(s0+seg/2);c.translate(R*0.62,0);c.rotate(Math.PI/2);c.font=font(Math.max(10,R*0.08));c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#fff';
-      const lines=EV_RULES[i].w.split('\n');lines.forEach((ln,j)=>{const yy=(j-(lines.length-1)/2)*R*0.095;c.strokeText(ln,0,yy);c.fillStyle='#111';c.fillText(ln,0,yy);});c.restore();}
+      if(seg<0.45){c.save();c.rotate(s0+seg/2);c.font=font(Math.max(9,R*0.07));c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#fff';const t=EV_RULES[i].w.replace('\n','');c.strokeText(t,R*0.6,0);c.fillStyle='#111';c.fillText(t,R*0.6,0);c.restore();}
+      else{c.save();c.rotate(s0+seg/2);c.translate(R*0.62,0);c.rotate(Math.PI/2);c.font=font(Math.max(10,R*0.08));c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#fff';
+      const lines=EV_RULES[i].w.split('\n');lines.forEach((ln,j)=>{const yy=(j-(lines.length-1)/2)*R*0.095;c.strokeText(ln,0,yy);c.fillStyle='#111';c.fillText(ln,0,yy);});c.restore();}}
     c.restore();
     c.fillStyle='#ffd23f';c.beginPath();c.arc(cx,cy,R*0.13,0,7);c.fill();c.lineWidth=3;c.strokeStyle='#111';c.stroke();
     c.beginPath();c.moveTo(cx-R*0.11,cy-R-18);c.lineTo(cx+R*0.11,cy-R-18);c.lineTo(cx,cy-R+16);c.closePath();c.fillStyle='#ff5c8a';c.fill();c.lineWidth=3;c.stroke();
-    const cur=Math.floor((((-ang)%(Math.PI*2))+Math.PI*2)%(Math.PI*2)/seg);
+    const cur=segAt((((-ang)%(Math.PI*2))+Math.PI*2)%(Math.PI*2));
     if(cur!==lastSeg&&phase!=='done'){lastSeg=cur;if(Math.random()<(phase==='slow'?0.6:0.2))tick.push({txt:['カカカッ','カッ','ドキドキ','ワクワク','カチッ'][Math.random()*5|0],x:cx+(Math.random()-0.5)*R*2.2,y:cy+R+40+Math.random()*30,t:0});}
     tick=tick.filter(w=>(w.t+=dt)<0.7);tick.forEach(w=>comic(w.txt,w.x,w.y-w.t*30,Math.max(18,R*0.1),'#fff',0));
     c.restore();
@@ -1652,15 +1668,19 @@ function startEvent(rule){
 }
 function genWave(s,w){
   if(B&&B.ev)return genEventWave(w);
-  const info=stageInfo(s),n=ENEMY_BASE.count+Math.floor(w*DIFF.countPerWave)+Math.floor(DIFF.countPerStage*Math.pow(s,0.7));
+  const info=stageInfo(s),n=Math.min(LATE.maxCount,ENEMY_BASE.count+Math.floor(w*DIFF.countPerWave)+Math.floor(DIFF.countPerStage*Math.pow(Math.min(s,LATE.from),0.7))+Math.floor(LATE.countPerStage*Math.max(0,s-LATE.from)*(0.6+w/30)));
   const hpB=ENEMY_BASE.hp*info.hpMul*Math.pow(DIFF.waveHp,w-1),spB=ENEMY_BASE.speed*info.spMul*(1+w*0.004),q=[];q.hpB=hpB;
   const mk=(t,el)=>({t,el,hp:Math.round(hpB*ET[t].hp*(el>=0?1.1:1)),sp:ET[t].sp*spB});
   for(let i=0;i<n;i++){
     const x=Math.random(),bc=info.breakers?0.1+Math.min(0.12,w*0.006):0;let t='grunt';
     if(x<bc)t='breaker';else if(w>=3&&x<bc+0.18)t='fast';else if(w>=5&&x<bc+0.32)t='tank';
-    q.push(mk(t,Math.random()<elemRate(s)?(info.els.length>1&&Math.random()<1/info.els.length+0.15?info.el:info.els[1+(Math.random()*(info.els.length-1)|0)]):-1));
+    q.push(mk(t,Math.random()<elemRate(s)?(info.els.length>1&&Math.random()<(s>=LATE.from-15?0.3:1/info.els.length+0.15)?info.el:info.els[1+(Math.random()*(info.els.length-1)|0)]):-1));
   }
   if(w%10===0)q.splice(Math.floor(q.length*0.6),0,mk('boss',info.el));
+  // 50-1以降：毎Waveボス1体（ドロップなし）＋ボスWaveは複数体（ステージが進むほど増える）
+  if(s>=BOSS_RUSH.from){const wd=Math.floor(s/WORLD_SIZE)+1;
+    q.splice(Math.floor(q.length*0.5),0,Object.assign(mk('boss',info.els[Math.random()*info.els.length|0]),{minor:1}));
+    if(w%10===0)for(let k=0;k<Math.min(BOSS_RUSH.max,1+Math.floor((wd-50)/BOSS_RUSH.per));k++)q.splice(Math.floor(q.length*(0.6+k*0.05)),0,Object.assign(mk('boss',info.els[k%info.els.length]),{minor:1}));}
   return q;
 }
 
@@ -1682,7 +1702,7 @@ function waveCleared(){
 }
 function spawn(sp){
   const c=Math.random()*COLS|0,T=ET[sp.t];
-  B.enemies.push({t:sp.t,el:sp.el,hp:sp.hp,max:sp.hp,sp:sp.sp,rad:T.rad,brk:(sp.t==='boss'&&B.s<1&&!B.ev)?0:(T.brk||0),coin:T.coin,
+  B.enemies.push({minor:!!sp.minor,tier:B.ev?Math.min(5,Math.floor(B.wave/10)):enemyTier(B.s),t:sp.t,el:sp.el,hp:sp.hp,max:sp.hp,sp:sp.sp,rad:T.rad,brk:(sp.t==='boss'&&B.s<1&&!B.ev)?0:(T.brk||0),coin:T.coin,
     x:c+0.5,y:-0.5,r:-1,c,nr:0,nc:c,tx:c+0.5,ty:0.5,fd:999,slow:0,stun:0,hitF:0,atkSeg:null,atkT:0,leaving:false,seed:Math.random()*10,swing:0,
     shifts:sp.t==='boss'&&(B.ev?B.wave>=30:B.s>=BOSS_SHIFT.fromStage)?((B.ev?B.wave>=60:B.s>=BOSS_SHIFT.lateStage)?BOSS_SHIFT.lateAt:BOSS_SHIFT.at).slice():null});
 }
@@ -1816,7 +1836,8 @@ function killEnemy(e){
     const c=Math.round(e.coin*(B.ev?evCoinMul():rGrow(B.s,REWARD.killGrowth))*(1+B.buff.coin/100+sc/100));S.coins+=c;B.earned+=c;
     for(let i=0;i<8;i++)fx({k:'bit',x:e.x,y:e.y,vx:rnd(-3,3),vy:rnd(-3.5,1),life:0.6,col:i%2?(e.el>=0?EL[e.el].c:'#ddd'):'#111',s:rnd(0.06,0.13)});
     fx({k:'ring',x:e.x,y:e.y,life:0.35,col:'#ffd23f',r0:0.1,r1:0.8,w:5});
-    if(e.t==='boss'){bossDrop(e);pow(e.x,e.y,'K.O.!!','#ffd23f',1.6);B.shake=10;S.tickets++;toast('🎟 ボス撃破！チケットドロップ！','q');
+    if(e.t==='boss'&&e.minor){pow(e.x,e.y,'K.O.!','#ffd23f',1.2);B.shake=6;}
+    else if(e.t==='boss'){bossDrop(e);pow(e.x,e.y,'K.O.!!','#ffd23f',1.6);B.shake=10;S.tickets++;toast('🎟 ボス撃破！チケットドロップ！','q');
       if(B.s>=LEGEND_DROP.fromStage&&Math.random()<LEGEND_DROP.chance){S.legend=(S.legend||0)+1;S.st.legendGet=(S.st.legendGet||0)+1;B.legendGot=(B.legendGot||0)+1;banner('🌟 LEGEND TICKET!!',2.2);toast('🌟 レジェンドチケットがドロップ！！','q');fx({k:'ring',x:e.x,y:e.y,life:0.8,col:'#ffd700',r0:0.2,r1:2.5,w:8});save();}}
     else if(Math.random()<0.3)pow(e.x,e.y,POWS[Math.random()*POWS.length|0],['#ffd23f','#7ff0ff','#ff9ec0','#b6ff7a'][Math.random()*4|0],1);
     if(e.t!=='boss'&&Math.random()<0.01){S.tickets++;fx({k:'num',x:e.x,y:e.y-0.4,life:1.2,text:'🎟+1',col:'#ffd23f',size:0.4,keep:1});}
@@ -2016,9 +2037,9 @@ const SKILLS=[
 ];
 const SKMAX=20;
 const SK={};SKILLS.forEach(k=>SK[k.id]=k);
-const WALLMAX=10;
-function wallMul(){return 1+0.15*((S&&S.wallLv)||0);}      // 壁Lv1ごとに壊せる壁の耐久 +15%（Lv10で×2.5）
-function wallCost(l){return Math.round(400*Math.pow(1.6,l));}
+const WALLMAX=30;
+function wallMul(){const l=(S&&S.wallLv)||0;return 1+0.15*Math.min(l,10)+0.4*Math.max(0,l-10);}   // Lv10で×2.5、Lv30で×10.5
+function wallCost(l){return Math.round(l<10?400*Math.pow(1.6,l):400*Math.pow(1.6,10)*Math.pow(1.18,l-10));}
 const ATKMAX=100;
 function atkMul(){return 1+0.05*((S&&S.atkLv)||0);}
 function atkCost(l){return Math.round(150*Math.pow(1.08,l));}
@@ -2111,7 +2132,7 @@ function renderSkills(){
   const wallCard=`<div class="panel skc" style="background:#ffeede"><div class="skic" style="background:#ff8f5e">🧱</div>
      <div class="qi"><div class="qt">壁の強化 <span class="mut">Lv.${wl}/${WALLMAX}</span></div>
       <div class="qd">「壊せる壁」の耐久がアップ（全ステージでずっと有効）</div>
-      <div class="qd"><b>いま 耐久 ×${wallMul().toFixed(2)}</b>${wl<WALLMAX?` <span style="color:#d6336c">→ 次Lv ×${(1+0.15*(wl+1)).toFixed(2)}</span>`:''}</div>
+      <div class="qd"><b>いま 耐久 ×${wallMul().toFixed(2)}</b>${wl<WALLMAX?` <span style="color:#d6336c">→ 次Lv ×${(function(){const l=wl+1;return 1+0.15*Math.min(l,10)+0.4*Math.max(0,l-10);})().toFixed(2)}</span>`:''}</div>
       <div class="qbar"><i style="width:${wl/WALLMAX*100}%;background:#ff8f5e"></i></div></div>
      <div class="qrw">${wl>=WALLMAX?'<span class="mut">MAX</span>':`<button class="btn sm y" data-wall="1" ${S.coins<wc?'disabled':''}>強化<br>🪙${wc.toLocaleString()}</button>`}</div></div>`;
   $('#skList').innerHTML=`<div class="panel skc" style="background:#fff6d6"><div class="skic" style="background:#ff5c8a">💪</div>
@@ -2461,32 +2482,63 @@ function drawRangeLabel(){
   ctx.fillStyle='#111';rr(x+2,y+2,w,h,8);ctx.fill();ctx.fillStyle='#fff';rr(x,y,w,h,8);ctx.fill();ctx.strokeStyle='#111';ctx.lineWidth=2;ctx.stroke();
   ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+w/2,y+h/2+1);
 }
+function tierPath(tier,x,y,R){
+  ctx.beginPath();
+  if(tier===1){rr(x-R*0.95,y-R*0.9,R*1.9,R*1.8,R*0.3);return;}                       // メカ：角ばった体
+  if(tier===2){ctx.moveTo(x-R,y+R*0.85);ctx.lineTo(x-R,y-R*0.1);ctx.arc(x,y-R*0.1,R,Math.PI,0);ctx.lineTo(x+R,y+R*0.85);   // ゴースト：すそがギザギザ
+    for(let i=0;i<4;i++){const x1=x+R-(i+0.5)*R*0.5,x2=x+R-(i+1)*R*0.5;ctx.quadraticCurveTo(x1,y+R*0.45,x2,y+R*0.85);}ctx.closePath();return;}
+  if(tier===3){for(let i=0;i<6;i++){const a=-Math.PI/2+i*Math.PI/3,q=i%3===0?R*1.15:R*0.95;ctx.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}ctx.closePath();return;}   // クリスタル
+  if(tier===5){for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?R*0.72:R*1.12;ctx.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}ctx.closePath();return;}  // コズミック：星
+  ctx.arc(x,y,R,0,7);
+}
 function enemyBody(e,x,y,R,col,lt){
-  ctx.fillStyle=col;ctx.strokeStyle='#111';ctx.lineWidth=2.5;
+  const tier=e.tier||0;
+  ctx.fillStyle=col;ctx.strokeStyle='#111';ctx.lineWidth=2.5;ctx.lineJoin='round';
+  // うしろの飾り
+  if(tier===4){ctx.fillStyle='#3a2340';for(const sd of [-1,1]){ctx.beginPath();ctx.moveTo(x+sd*R*0.6,y-R*0.3);ctx.lineTo(x+sd*R*1.75,y-R*0.9);ctx.lineTo(x+sd*R*1.45,y-R*0.2);ctx.lineTo(x+sd*R*1.8,y+R*0.1);ctx.lineTo(x+sd*R*1.3,y+R*0.25);ctx.lineTo(x+sd*R*0.6,y+R*0.3);ctx.closePath();ctx.fill();ctx.stroke();}}
+  if(tier===5){ctx.strokeStyle='#ffd23f';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,R*1.65,R*0.5,-0.35,Math.PI,Math.PI*2);ctx.stroke();ctx.strokeStyle='#111';ctx.lineWidth=2.5;}
   if(e.t==='breaker'){
     ctx.beginPath();for(let i=0;i<3;i++){const sx=x-R*0.6+i*R*0.6;ctx.moveTo(sx-R*0.25,y-R*0.75);ctx.lineTo(sx,y-R*1.3);ctx.lineTo(sx+R*0.25,y-R*0.75);}ctx.fillStyle='#ff9a3c';ctx.fill();ctx.stroke();
-    ctx.fillStyle=col;rr(x-R,y-R*0.85,R*2,R*1.75,R*0.35);ctx.fill();ctx.stroke();
-    // hammer
+    ctx.fillStyle=col;if(tier===0){rr(x-R,y-R*0.85,R*2,R*1.75,R*0.35);}else tierPath(tier,x,y,R);ctx.fill();ctx.stroke();
     ctx.save();ctx.translate(x+R*0.95,y);ctx.rotate(-0.6+(e.swing>0?Math.sin(e.swing*Math.PI)*1.6:0));
     ctx.fillStyle='#8a5a3a';ctx.fillRect(-R*0.08,-R*1.1,R*0.16,R*1.1);ctx.strokeRect(-R*0.08,-R*1.1,R*0.16,R*1.1);
     ctx.fillStyle='#888';ctx.fillRect(-R*0.4,-R*1.4,R*0.8,R*0.4);ctx.strokeRect(-R*0.4,-R*1.4,R*0.8,R*0.4);ctx.restore();
   } else {
-    ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fill();ctx.stroke();
-    if(e.t==='tank'){ctx.fillStyle='#777';ctx.beginPath();ctx.arc(x,y,R,Math.PI*1.08,Math.PI*1.92);ctx.closePath();ctx.fill();ctx.stroke();}
+    tierPath(tier,x,y,R);ctx.fillStyle=col;ctx.fill();ctx.stroke();
+    if(e.t==='tank'){ctx.fillStyle='#777';ctx.save();tierPath(tier,x,y,R);ctx.clip();ctx.fillRect(x-R*1.3,y-R*1.4,R*2.6,R*0.85);ctx.restore();tierPath(tier,x,y,R);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x-R,y-R*0.55);ctx.lineTo(x+R,y-R*0.55);ctx.stroke();}
     if(e.t==='boss'){ctx.fillStyle='#ffd23f';ctx.beginPath();ctx.moveTo(x-R*0.6,y-R*0.75);ctx.lineTo(x-R*0.7,y-R*1.35);ctx.lineTo(x-R*0.3,y-R*1.05);ctx.lineTo(x,y-R*1.5);ctx.lineTo(x+R*0.3,y-R*1.05);ctx.lineTo(x+R*0.7,y-R*1.35);ctx.lineTo(x+R*0.6,y-R*0.75);ctx.closePath();ctx.fill();ctx.stroke();}
   }
-  // eyes
+  // 体の模様
+  ctx.lineWidth=1.8;
+  if(tier===1){ctx.fillStyle='#111';for(const p of [[-0.7,-0.65],[0.7,-0.65],[-0.7,0.65],[0.7,0.65]]){ctx.beginPath();ctx.arc(x+p[0]*R,y+p[1]*R,R*0.07,0,7);ctx.fill();}
+    if(e.t!=='boss'&&e.t!=='breaker'){ctx.beginPath();ctx.moveTo(x,y-R*0.9);ctx.lineTo(x,y-R*1.35);ctx.stroke();ctx.fillStyle='#ff3b5c';ctx.beginPath();ctx.arc(x,y-R*1.4,R*0.14,0,7);ctx.fill();ctx.stroke();}}
+  if(tier===3){ctx.strokeStyle='rgba(255,255,255,.85)';ctx.beginPath();ctx.moveTo(x-R*0.5,y-R*0.55);ctx.lineTo(x-R*0.2,y-R*0.85);ctx.moveTo(x+R*0.6,y+R*0.2);ctx.lineTo(x+R*0.3,y+R*0.6);ctx.stroke();ctx.strokeStyle='#111';}
+  if(tier===4&&e.t!=='boss'){ctx.fillStyle='#ff3b5c';for(const sd of [-1,1]){ctx.beginPath();ctx.moveTo(x+sd*R*0.25,y-R*0.85);ctx.quadraticCurveTo(x+sd*R*0.75,y-R*1.15,x+sd*R*0.7,y-R*1.55);ctx.quadraticCurveTo(x+sd*R*0.55,y-R*1.05,x+sd*R*0.55,y-R*0.7);ctx.closePath();ctx.fill();ctx.stroke();}}
+  if(tier===5){ctx.strokeStyle='#ffd23f';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(x,y,R*1.65,R*0.5,-0.35,0,Math.PI);ctx.stroke();ctx.strokeStyle='#111';ctx.lineWidth=1.8;
+    ctx.fillStyle='#fff';for(const p of [[-1.3,-0.9,0.12],[1.2,-1.1,0.09],[1.4,0.7,0.08]]){ctx.beginPath();ctx.arc(x+p[0]*R,y+p[1]*R,R*p[2],0,7);ctx.fill();}}
+  // 目
   const ey=y-R*0.1,exo=R*0.36,er=R*0.24;
-  if(lt<3)for(const s of [-1,1]){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+s*exo,ey,er,0,7);ctx.fill();ctx.lineWidth=1.5;ctx.stroke();
-    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+s*exo,ey+er*0.25,er*0.5,0,7);ctx.fill();
-    ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(x+s*exo*1.6,ey-er*1.3);ctx.lineTo(x+s*exo*0.3,ey-er*0.7);ctx.stroke();}
+  if(lt<3){
+    if(tier===1){ctx.fillStyle='#111';rr(x-R*0.72,ey-er*0.8,R*1.44,er*1.6,er*0.5);ctx.fill();ctx.fillStyle='#7ff0ff';for(const sd of [-1,1]){rr(x+sd*exo-er*0.7,ey-er*0.35,er*1.4,er*0.7,er*0.2);ctx.fill();}}
+    else if(tier===2){for(const sd of [-1,1]){ctx.fillStyle='#111';ctx.beginPath();ctx.ellipse(x+sd*exo,ey,er*0.75,er*1.1,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+sd*exo-er*0.2,ey-er*0.4,er*0.25,0,7);ctx.fill();}
+      ctx.fillStyle='#ff7aa2';ctx.beginPath();ctx.ellipse(x,ey+er*1.6,er*0.4,er*0.5,0,0,Math.PI);ctx.fill();ctx.stroke();}
+    else if(tier===3){for(const sd of [-1,1]){ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(x+sd*exo*0.4,ey-er*0.6);ctx.lineTo(x+sd*exo*1.5,ey-er*0.9);ctx.lineTo(x+sd*exo,ey+er*0.7);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+sd*exo,ey-er*0.15,er*0.3,0,7);ctx.fill();}}
+    else if(tier===4){for(const sd of [-1,1]){ctx.fillStyle='#ffe14d';ctx.beginPath();ctx.ellipse(x+sd*exo,ey,er,er*0.75,sd*0.35,0,7);ctx.fill();ctx.stroke();ctx.fillStyle='#d1002f';ctx.fillRect(x+sd*exo-er*0.12,ey-er*0.65,er*0.24,er*1.3);}
+      ctx.fillStyle='#fff';for(const sd of [-1,1]){ctx.beginPath();ctx.moveTo(x+sd*R*0.3,ey+er*1.3);ctx.lineTo(x+sd*R*0.18,ey+er*2.1);ctx.lineTo(x+sd*R*0.06,ey+er*1.3);ctx.closePath();ctx.fill();ctx.stroke();}}
+    else if(tier===5){for(const sd of [-1,1]){ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+sd*exo,ey,er,0,7);ctx.fill();ctx.fillStyle='#ffd23f';ctx.beginPath();for(let i=0;i<8;i++){const a=-Math.PI/2+i*Math.PI/4,q=i%2?er*0.3:er*0.8;ctx.lineTo(x+sd*exo+Math.cos(a)*q,ey+Math.sin(a)*q);}ctx.closePath();ctx.fill();}}
+    else for(const sd of [-1,1]){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x+sd*exo,ey,er,0,7);ctx.fill();ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+sd*exo,ey+er*0.25,er*0.5,0,7);ctx.fill();
+      ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(x+sd*exo*1.6,ey-er*1.3);ctx.lineTo(x+sd*exo*0.3,ey-er*0.7);ctx.stroke();}
+  }
   if(e.el>=0){const bx=x+R*0.75,by=y+R*0.7,br=Math.max(6,R*0.42);ctx.fillStyle=EL[e.el].c;ctx.strokeStyle='#111';ctx.lineWidth=1.8;ctx.beginPath();ctx.arc(bx,by,br,0,7);ctx.fill();ctx.stroke();
     ctx.fillStyle='#fff';ctx.font=font(br*1.15);ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=2;ctx.strokeText(EL[e.el].s,bx,by+1);ctx.fillText(EL[e.el].s,bx,by+1);}
 }
 // 軽量モード用：敵の見た目を一度だけ絵にして使い回す
 var _spr=new Map();
 function enemySprite(e,R,col,lt){
-  const key=`${e.t}|${col}|${e.el}|${Math.round(R*4)}|${dpr}|${lt>=3?1:0}`;let c=_spr.get(key);if(c)return c;
+  const key=`${e.tier||0}|${e.t}|${col}|${e.el}|${Math.round(R*4)}|${dpr}|${lt>=3?1:0}`;let c=_spr.get(key);if(c)return c;
   if(_spr.size>400)_spr.clear();
   const half=R*2.2;c=document.createElement('canvas');c.width=c.height=Math.ceil(half*2*dpr);
   const main=ctx;ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);enemyBody(Object.assign({},e,{swing:0}),half,half,R,col,lt);ctx=main;
