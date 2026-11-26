@@ -367,6 +367,21 @@ html[data-theme="mono"] body{filter:grayscale(1) contrast(1.12);}
 .dvGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:#111;border:2.5px solid #b07bff;padding:1px;width:100%;height:100%;}
 .dvGrid i{display:block;}
 .dvBlk{display:block;width:100%;height:100%;background:#b07bff;border:2.5px solid #111;box-shadow:inset 0 6px 0 rgba(255,255,255,.45);}
+#treeOv{position:fixed;inset:0;z-index:70;touch-action:none;}
+#treeOv canvas{position:absolute;inset:0;touch-action:none;}
+.trTop{position:absolute;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top));display:flex;gap:6px;align-items:center;}
+.trTop .sp{flex:1;}
+.trTop .pill{font-size:13px;padding:3px 8px;}
+.trA{position:absolute;left:8px;top:calc(56px + env(safe-area-inset-top));font-size:12px;padding:3px 8px;background:#e9e2ff;}
+.trZoom{position:absolute;right:8px;top:calc(60px + env(safe-area-inset-top));display:flex;flex-direction:column;gap:6px;}
+.trZoom .btn{width:44px;font-size:20px;}
+.trInfo{position:absolute;left:8px;right:8px;bottom:calc(10px + env(safe-area-inset-bottom));}
+.trI1{display:flex;align-items:center;gap:10px;background:#fff;border:3px solid #111;border-radius:16px;box-shadow:4px 4px 0 #111;padding:10px 12px;}
+.trDot{flex:0 0 auto;min-width:46px;height:40px;border-radius:50%;border:2.5px solid #111;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;text-shadow:1.5px 1.5px 0 #111,-1px -1px 0 #111;font-size:14px;padding:0 4px;}
+.trI2{flex:1;min-width:0;display:flex;flex-direction:column;} .trI2 b{font-size:15px;} .trI2 small{font-size:11px;color:#666;font-weight:700;}
+.trI1 .btn{line-height:1.15;font-size:14px;}
+.trSum{display:flex;flex-direction:column;gap:4px;overflow-y:auto;min-height:0;padding:4px;}
+.trSum div{display:flex;justify-content:space-between;font-weight:700;font-size:13px;border-bottom:1.5px dashed #ccc;padding:3px 2px;}
 .gTabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;width:100%;}
 .gTabs .btn{font-size:14px;}
 .ucard.stack{box-shadow:2px 2px 0 #111,5px 5px 0 #fff,7px 7px 0 #111;margin:0 5px 5px 0;}
@@ -588,6 +603,10 @@ const IcoDraw=(()=>{
     box(){P([[10,34],[50,18],[90,34],[50,50]]);fo('#ffcf8a');P([[10,34],[50,50],[50,92],[10,76]]);fo('#e8a85a');P([[50,50],[90,34],[90,76],[50,92]]);fo('#d9934a');P([[30,26],[70,42],[70,50],[30,34]]);g.fillStyle='rgba(255,255,255,.5)';g.fill();},
     spray(){RR(28,34,40,58,8);fo('#ff9ee6');RR(36,20,24,16,4);fo('#c9d2dc');RR(42,10,12,12,3);fo('#888');RR(28,52,40,16,2);g.fillStyle='#fff';g.fill();
       [[70,14,4],[80,8,3],[82,22,3.5],[90,14,2.5]].forEach(d=>{C(d[0],d[1],d[2]);fo('#ff5c8a');});},
+    galaxy(){const ring=(a0,a1)=>{g.beginPath();g.ellipse(50,54,45,13,-0.35,a0,a1);g.lineCap='round';g.strokeStyle='#111';g.lineWidth=13;g.stroke();g.strokeStyle='#ffd23f';g.lineWidth=6;g.stroke();};
+      ring(Math.PI,Math.PI*2);C(50,52,26);fo('#a66bff');g.save();g.beginPath();g.arc(50,52,26,0,7);g.clip();g.fillStyle='rgba(255,255,255,.28)';g.fillRect(20,36,60,7);g.fillStyle='rgba(60,20,140,.25)';g.fillRect(20,58,60,8);g.restore();
+      HL(40,40,8,4);ring(0,Math.PI);ST(16,18,12,5);fo('#fff');ST(86,84,9,4);fo('#7ff0ff');},
+    tree(){RR(42,58,16,34,4);fo('#a0622d');C(50,38,30);fo('#5fd35f');C(30,50,16);fo('#5fd35f');C(70,50,16);fo('#5fd35f');C(40,30,6);fo('#ff5c8a');C(62,42,5);fo('#ffd23f');C(48,52,5);fo('#3fc5ff');},
     menu(){RR(10,10,80,80,16);fo('#fff');[32,50,68].forEach(y=>{RR(24,y-5,52,10,5);fo('#111');});},
     mail(){RR(8,22,84,58,8);fo('#fff');g.beginPath();g.moveTo(10,26);g.lineTo(50,56);g.lineTo(90,26);g.strokeStyle='#111';g.lineWidth=ICO_LW;g.lineJoin='round';g.stroke();RR(64,8,28,22,6);fo('#ff5c8a');},
     gift(){RR(12,40,76,50,6);fo('#ff5c8a');RR(8,28,84,16,5);fo('#ff7aa2');RR(43,28,14,62,2);fo('#ffd23f');
@@ -601,7 +620,7 @@ const IcoDraw=(()=>{
   };
   return (name,ctx)=>{g=ctx;(D[name]||D.star)();};
 })();
-const EMO={'🧴':'spray','📦':'box','🗂':'deck','🛒':'shop','🔗':'chain','📣':'mega','🏷':'sticker','☰':'menu','📬':'mail','🎁':'gift','⏩':'ff','🗑':'trash','📖':'book','🔄':'swap','🪙':'coin','🎟':'ticket','🌟':'legend','★':'star','🎨':'palette','⚔':'swords','🔒':'lock','🔓':'unlock','⚡':'bolt','✨':'sparkle','❤':'heart','📜':'scroll','🎯':'target','🧱':'brick','🛠':'tools','👑':'crown','🌈':'rainbow','🔥':'fire','🐌':'snail','⏱':'timer','💪':'muscle','🛡':'shield','🎰':'slot','🖌':'brush','🧽':'sponge','💰':'bag','⚠':'warning','🧩':'puzzle','💥':'boom','💡':'bulb','🟢':'slime','💣':'bomb','💢':'anger','🧊':'ice','🌊':'wave','👾':'monster','⏸':'pause','🏳':'flag','▶':'play','◀':'prev'};
+const EMO={'🌳':'tree','🪐':'galaxy','🧴':'spray','📦':'box','🗂':'deck','🛒':'shop','🔗':'chain','📣':'mega','🏷':'sticker','☰':'menu','📬':'mail','🎁':'gift','⏩':'ff','🗑':'trash','📖':'book','🔄':'swap','🪙':'coin','🎟':'ticket','🌟':'legend','★':'star','🎨':'palette','⚔':'swords','🔒':'lock','🔓':'unlock','⚡':'bolt','✨':'sparkle','❤':'heart','📜':'scroll','🎯':'target','🧱':'brick','🛠':'tools','👑':'crown','🌈':'rainbow','🔥':'fire','🐌':'snail','⏱':'timer','💪':'muscle','🛡':'shield','🎰':'slot','🖌':'brush','🧽':'sponge','💰':'bag','⚠':'warning','🧩':'puzzle','💥':'boom','💡':'bulb','🟢':'slime','💣':'bomb','💢':'anger','🧊':'ice','🌊':'wave','👾':'monster','⏸':'pause','🏳':'flag','▶':'play','◀':'prev'};
 const EMO_SRC='('+Object.keys(EMO).join('|')+')️?';
 const EMO_TEST=new RegExp(EMO_SRC,'u');
 const _icoC={},_icoU={};
@@ -662,9 +681,9 @@ function cellDark(l){return l>0&&cellL(l)<56;}
    ===================================================================== */
 const ENEMY_BASE={hp:55, speed:1.0, segHp:90, count:7};
 const DIFF={
-  hpPerStage:0.28,     // 1ステージ進むごとのHP増加
+  hpPerStage:0.2,      // 1ステージ進むごとのHP増加
   hpCurve:0.8,         // HPの伸びのカーブ（1=比例、小さいほど後半の伸びがゆるやか）
-  worldHpMul:1.06,     // ワールドが1つ進むごとのHP倍率（大きいと後半が急に難しくなる）
+  worldHpMul:1.045,     // ワールドが1つ進むごとのHP倍率（大きいと後半が急に難しくなる）
   speedMax:0.35,       // 移動速度の上がり幅の上限（0.35 = 最大で+35%）
   speedScale:40,       // 速度が上限に近づくまでのステージ数の目安
   segHpPerStage:12,    // 1ステージごとの「壊せる壁」の耐久増加
@@ -685,7 +704,7 @@ function elemKinds(s){return Math.min(5,1+Math.floor(s/ELEM_STEP));}
 // 11-1以降（ステージ番号150〜）はゆるやかに強くし、そのぶん敵の数で難しくする
 // 50-1以降のボスラッシュ：毎Waveボス1体、ボスWaveは per ワールドごとに+1体（最大 max 体追加）
 const BOSS_RUSH={from:735, per:10, max:6};
-const LATE={from:150, hpPerStage:0.006, countPerStage:0.03, maxCount:70};
+const LATE={from:150, hpPerStage:0.0045, countPerStage:0.03, maxCount:70};
 // 敵のデザイン：10-1〜, 20-1〜, 30-1〜, 40-1〜, 50-1〜 で見た目が変わる
 function enemyTier(s){const w=Math.floor(s/WORLD_SIZE)+1;return w<10?0:w<20?1:w<30?2:w<40?3:w<50?4:5;}
 const TIER_N=['ノーマル','メカ','ゴースト','クリスタル','デビル','コズミック'];
@@ -773,7 +792,7 @@ function stkVal(k){return STKD[k.type].v(k.r);}
 function stkText(k){return STKD[k.type].d(stkVal(k),k.r);}
 function stkHTML(k,cls){return `<span class="stk rs${k.r} ${cls||''}">${STKD[k.type].ic}</span>`;}
 function addStk(type,r){const k={id:S.stid++,type,r,on:null};S.stk.push(k);return k;}
-function maxPts(u){return RAR[u.r].p+(u.bonus||0);}
+function maxPts(u){return RAR[u.r].p+(u.bonus||0)+(S.tree&&S.tree.length?TT().paintR[u.r]:0);}
 function starHTML(u){return u.bonus?`<span class="lb">✚${u.bonus}</span>`:'';}
 function ballHTML(r,cls){return `<span class="ball bl${r} ${cls||''}"></span>`;}
 
@@ -793,6 +812,7 @@ function statsOf(u){
     if(st.type==='chain'){o.chain=chainN(st.r);o.chainF=v/100;}
     if(st.type==='boss')o.boss=v/100;
     if(st.type==='coin')o.coin=v/100;}
+  treeApply(o,u);
   return o;
 }
 function domCell(u){let b=-1,bi=0;u.pts.forEach((v,i)=>{if(v>b){b=v;bi=i;}});return {i:bi,l:b};}
@@ -1087,6 +1107,8 @@ function openGM(){
    <div class="gmT">シール（そのレア度で全種類を1枚ずつ）</div>
    <div class="gmGrid">${RAR.map((x,r)=>`<button class="btn sm" data-act="k${r}">${rbHTML(r)} シール</button>`).join('')}</div>
    <div class="gmRow"><input id="gmE" class="gmIn" type="number" inputmode="numeric" value="1"><button class="btn sm y" data-act="addE">キンキラ挑戦チケット追加</button></div>
+   <div class="gmT">ギャラクシー（いま ${(S.tree||[]).length}/${TREE.N.length-1}）</div>
+   <div class="gmGrid"><button class="btn sm g" data-act="tr100">100解放</button><button class="btn sm g" data-act="tr500">500解放</button><button class="btn sm g" data-act="trAll">全解放</button><button class="btn sm" data-act="trArea">エリア全開拓</button><button class="btn sm p" data-act="trReset">ツリーリセット</button></div>
    <div class="gmT">ステージ全クリア</div>
    <div class="gmGrid">${Array.from({length:Math.ceil(MAX_STAGE/WORLD_SIZE)},(_,i)=>`<button class="btn sm" data-act="w${i+1}">ステージ${i+1}</button>`).join('')}</div>
   </div><div class="mbtns"><button class="btn" data-act="close">閉じる</button></div>`,(()=>{
@@ -1095,7 +1117,12 @@ function openGM(){
       addT:()=>{const n=num('gmT');S.tickets+=n;done(`🎟 +${n}`);},
       addL:()=>{const n=num('gmL');S.legend=(S.legend||0)+n;done(`🌟 +${n}`);},
       addE:()=>{const n=num('gmE');S.evTix=(S.evTix||0)+n;done(`キンキラ挑戦チケット +${n}`);},
-      addB:()=>{const n=num('gmB');S.gmBall=(S.gmBall||0)+n;done(`GMボール +${n}`);}};
+      addB:()=>{const n=num('gmB');S.gmBall=(S.gmBall||0)+n;done(`GMボール +${n}`);},
+      trArea:()=>{S.gmTreeArea=1;done('ギャラクシーのエリアを全開拓');},
+      trReset:()=>{S.tree=[];S.treeSpent=0;_TT=null;done('ギャラクシーをリセット');}};
+    const trN=k=>{const have=new Set(S.tree||[]);const add=TREE.N.filter(n=>!n.root&&!have.has(n.id)).sort((a,b)=>a.d-b.d||a.id-b.id).slice(0,Math.max(0,k-have.size));
+      S.tree=[...have,...add.map(n=>n.id)];_TT=null;S.st.treeN=S.tree.length;done(`ギャラクシー ${S.tree.length}個 解放`);};
+    a.tr100=()=>trN(100);a.tr500=()=>trN(500);a.trAll=()=>trN(TREE.N.length);
     RAR.forEach((x,r)=>a['k'+r]=()=>{STKS.forEach(t=>addStk(t.id,r));done(`${x.n}シール 全${STKS.length}種 +1`);});
     [5,6,7,8,9].forEach(r=>a['x'+r]=()=>{const n=Math.max(1,num('gmX'));S.cTix[r-5]+=n;done(`${RAR[r].n}確定チケット +${n}`);});
     for(let w=1;w<=Math.ceil(MAX_STAGE/WORLD_SIZE);w++)a['w'+w]=()=>{S.cleared=Math.max(S.cleared,Math.min(MAX_STAGE,w*WORLD_SIZE));done(`ステージ${w}まで全クリア`);if(B.mode==='idle')toIdle();};
@@ -1311,6 +1338,243 @@ function openBox(tab){
     <div class="bxList">${body}</div><div class="mbtns"><button class="btn" data-act="close">閉じる</button></div>`,acts);
 }
 
+/* ================= SKILL TREE（スキルツリー） ================= */
+// 効果の種類：v=1ノードの効果量
+const TK={
+ atk:{n:'全キャラ火力',s:'火',v:6,u:'%'},      crit:{n:'会心率',s:'会',v:1,u:'%'},
+ rng:{n:'全キャラ射程',s:'射',v:4,u:'%'},      spd:{n:'全キャラ攻撃速度',s:'速',v:4,u:'%'},
+ eff:{n:'足止め発動率',s:'足',v:1,u:'%'},
+ atkR:{n:'の火力',s:'火',v:10,u:'%',r:1},      rngR:{n:'の射程',s:'射',v:6,u:'%',r:1},
+ spdR:{n:'の攻撃速度',s:'速',v:6,u:'%',r:1},  paintR:{n:'の塗り回数',s:'塗',v:1,u:'回',r:1},
+ elem:{n:'特効ダメージ',s:'',v:10,u:'%',e:1},  elemAll:{n:'全属性の特効ダメージ',s:'特',v:5,u:'%'},
+ eSpd:{n:'敵の移動速度',s:'遅',v:1,u:'%',neg:1},eHp:{n:'敵のHP',s:'弱',v:1,u:'%',neg:1},
+ boss:{n:'ボスへのダメージ',s:'王',v:8,u:'%'}, coin:{n:'獲得コイン',s:'金',v:5,u:'%'},
+ wall:{n:'壊せる壁の耐久',s:'壁',v:8,u:'%'},  cd:{n:'スキルのクールタイム',s:'CT',v:1,u:'%',neg:1},
+ life:{n:'スタート時のライフ',s:'命',v:1,u:''},
+};
+const TREE_CAP={eSpd:40,eHp:35,cd:40,crit:60,eff:60};   // 上限（%）
+const TREE=(()=>{
+  const BR=[
+   {n:'火力',col:'#ff4d6d',base:'atk',groups:[{lanes:[['atk',33],['crit',26],['atk',25]]}]},
+   {n:'射程',col:'#3fc5ff',base:'rng',groups:[{lanes:[['rng',28],['rng',22]]}]},
+   {n:'速度',col:'#8be04a',base:'spd',groups:[{lanes:[['spd',28],['spd',22],['eff',20]]}]},
+   {n:'レアリティ',col:'#ffc61a',base:'atk',special:'rar',lanesN:28,groups:[]},   // N（独立）＋ 3本の道
+   {n:'属性',col:'#a66bff',base:'elemAll',groups:EL.map((e,i)=>({hub:['elem',i],lanes:[[['elem',i],16]]}))},
+   {n:'敵よわらせ',col:'#45c445',base:'eSpd',groups:[{lanes:[['eSpd',22],['eHp',22]]}]},
+   {n:'ボス',col:'#ff9a3c',base:'boss',groups:[{lanes:[['boss',30],['boss',22]]}]},
+   {n:'経済・防衛',col:'#2fb8c9',base:'coin',groups:[{lanes:[['coin',24]]},{lanes:[['wall',24]]},{lanes:[['cd',20]]},{lanes:[['life',12]]}]},
+  ];
+  const N=[];const add=o=>{o.id=N.length;N.push(o);return o;};
+  const root=add({x:0,y:0,root:1,d:0,p:-1,b:-1,k:null,rad:0.85});
+  let L=0;BR.forEach(b=>{L+=b.lanesN||0;b.groups.forEach(g=>L+=g.lanes.length);});const SEC=[];
+  const GAP=1.6,du=Math.PI*2/(L+GAP*BR.length);let a=-Math.PI/2-du*(BR[0].groups.reduce((s,g)=>s+g.lanes.length,0))/2;
+  const P=(r,an)=>({x:Math.cos(an)*r,y:Math.sin(an)*r});
+  const ef=x=>Array.isArray(x)?{k:x[0],q:x[1]}:{k:x,q:null};
+  BR.forEach((b,bi)=>{
+    const lanesN=b.lanesN||b.groups.reduce((s,g)=>s+g.lanes.length,0),a0=a,bc=a0+du*(lanesN-1)/2;b.ang=bc;
+    let par=root;
+    for(let i=0;i<5;i++){const ev=-Math.PI/2+bi*Math.PI/4,pos=P(1.9+1.1*i,ev+(bc-ev)*i/4);par=add(Object.assign({p:par.id,b:bi,d:par.d+1,rad:0.3,trunk:1},pos,{k:b.base,q:null}));}
+    const trunkEnd=par;let li=0;
+    if(b.special==='rar'){
+      // N は独立。ほかは3本の道：R→UR→ZR、SR→LR→GR、SSR→MR→XR（前の区画をぜんぶ解放すると次がひらく）
+      const ARMS=[[0],[1,4,9],[2,5,8],[3,6,7]],OFF=[-3,-2,-1,1,2,3],PAT=['paintR','atkR','rngR','atkR','spdR','atkR'];
+      ARMS.forEach((rs,ai)=>{
+        const ac=a0+du*(ai*7+3);let prev=trunkEnd,rh=7.3,hd=trunkEnd.d+1;
+        rs.forEach((k,si0)=>{
+          const Lk=k===0?21:7,sec=[],need=Math.max(0,30-RAR[k].p),nP=Math.min(Lk,need);
+          const hub=add(Object.assign({p:prev.id,b:bi,d:hd,rad:0.36,hub:1,sec:k,gate:si0>0?rs[si0-1]:null,k:'atkR',q:k},P(rh+(ai%2)*0.5,ac)));sec.push(hub.id);
+          const sp=Math.min(du,0.78/(rh+1.2));
+          OFF.forEach((o,li2)=>{const an=ac+o*sp;let pv=hub;
+            for(let j=0;j<Lk;j++){let kk=PAT[li2],v=null;
+              if(kk==='paintR'){if(j<nP){const jj=j;v=Math.floor(need/nP)+(jj>=nP-need%nP?1:0);}else kk='atkR';}   // 塗り回数：合計で30になるまで
+              const n=add(Object.assign({p:pv.id,b:bi,d:hub.d+1+j,rad:0.27,sec:k,k:kk,q:k},v?{v}:{},P(rh+1.2+j,an)));sec.push(n.id);
+              if(j%3===2){const sd=o<0?-1:1;const bd=add(Object.assign({p:n.id,b:bi,d:n.d+1,rad:0.19,bud:1,sec:k,k:kk==='paintR'?'atkR':kk,q:k,half:1},P(rh+1.2+j+0.45,an+sd*sp*0.45)));sec.push(bd.id);}
+              pv=n;}});
+          SEC[k]=sec;prev=hub;hd=hub.d+Lk+1;rh+=Lk+2.4;
+        });
+      });
+      a=a0+du*(lanesN+GAP);return;
+    }
+    b.groups.forEach((g,gi)=>{
+      const ga=a0+du*(li+(g.lanes.length-1)/2);let gp=trunkEnd;
+      if(g.hub){const e=ef(g.hub);gp=add(Object.assign({p:trunkEnd.id,b:bi,d:trunkEnd.d+1,rad:0.32,hub:1},P(7.3+(g.lanes.length===1?(gi%2)*0.7:0),ga),e));}
+      g.lanes.forEach(ln=>{
+        const an=a0+du*li;li++;const e=ef(ln[0]);let prev=gp;
+        for(let j=0;j<ln[1];j++){
+          const n=add(Object.assign({p:prev.id,b:bi,d:prev.d+1,rad:0.27},P(8.8+j,an),e));
+          if(j%3===2){const bk=e.k==='paintR'?'atkR':e.k==='life'?'wall':e.k;const sd=(j%6===2)?1:-1;
+            add(Object.assign({p:n.id,b:bi,d:n.d+1,rad:0.19,bud:1},P(8.8+j+0.45,an+sd*du*0.45),{k:bk,q:e.q,half:1}));}
+          prev=n;
+        }
+      });
+    });
+    a=a0+du*(lanesN+GAP);
+  });
+  N.forEach(n=>{n.kids=[];});N.forEach(n=>{if(n.p>=0)N[n.p].kids.push(n.id);});
+  // ---- 銀河みたいに渦を巻かせる ----
+  let sd=12345;const rnd=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  const TW=r=>1.75*Math.log(1+r/3.5);   // 外ほどねじれる（増え方はゆるやか）
+  const MAP=(r,a,tr)=>{const t=TW(tr==null?r:tr);return {x:Math.cos(a+t)*r,y:Math.sin(a+t)*r};};
+  N.forEach(n=>{n.r0=Math.hypot(n.x,n.y);n.a0=Math.atan2(n.y,n.x);
+    if(!n.root&&!n.trunk){if(!n.bud&&!n.hub)n.r0+=(rnd()-0.5)*0.16;}
+    Object.assign(n,MAP(n.r0,n.a0,n.bud?N[n.p].r0:null));});   // 脇ノードは親と一緒に回す
+  N.forEach(n=>{if(n.p<0)return;const p=N[n.p];let da=n.a0-p.a0;da=Math.atan2(Math.sin(da),Math.cos(da));
+    const m=MAP((n.r0+p.r0)/2,p.a0+da/2);n.qx=2*m.x-(n.x+p.x)/2;n.qy=2*m.y-(n.y+p.y)/2;});   // 線もカーブ
+  BR.forEach(b=>{b.lab=MAP(5.9,b.ang);});
+  return {N,BR,SEC};
+})();
+const TV_N={atkR:8,rngR:6,spdR:6};   // Nだけは強化が大きい
+function tVal(n){if(n.k==='atk'){const v=3+Math.round(n.d*0.27);return n.half?Math.max(1,Math.round(v/2)):v;}   // 全キャラ火力：外側ほど大きい
+  if(n.v)return n.v;const t=TK[n.k];if(t.r&&n.q===0&&TV_N[n.k]){const v=TV_N[n.k];return n.half?Math.round(v/2):v;}if(!n.half)return t.v;return t.u==='回'||t.u===''?t.v:Math.max(1,Math.round(t.v/2));}
+function tName(n){const t=TK[n.k];return (t.r?RAR[n.q].n:'')+(t.e?EL[n.q].n:'')+t.n;}
+function tText(n){if(n.root)return 'スタート地点（最初から解放）';const t=TK[n.k],v=tVal(n);return `${tName(n)} ${t.neg?'-':'+'}${v}${t.u}`;}
+function tLabel(n){if(n.root)return 'START';const t=TK[n.k];if(t.r)return RAR[n.q].n;if(t.e)return EL[n.q].s;return t.s;}
+function tCost(n){return Math.round(220*Math.pow(n.d,1.42)*(n.bud?0.6:1)/10)*10;}
+// ステージをクリアするほど、解放できる段（エリア）が広がる
+const TREE_MAXD=Math.max(...TREE.N.map(n=>n.d));
+const TREE_K=(TREE_MAXD-2)/30;   // 900ステージ目（60-15）クリアで全エリア開拓
+function tMaxD(c){if(c==null&&S.gmTreeArea)return TREE_MAXD;c=c==null?S.cleared:c;return Math.min(TREE_MAXD,2+Math.floor(TREE_K*Math.sqrt(c)));}
+function tNeedStage(d){if(d<=2)return 0;return Math.ceil(Math.pow((d-2)/TREE_K,2)-1e-9);}   // 必要なクリア数
+function stLbl(c){const i=Math.max(0,c-1);return `${Math.floor(i/WORLD_SIZE)+1}-${i%WORLD_SIZE+1}`;}   // 外側ほど高いが、増え方はだんだんゆるやか
+let _ts=null,_tsN=-1;
+function tSet(){if(!_ts||_tsN!==(S.tree||[]).length){_ts=new Set(S.tree||[]);_tsN=(S.tree||[]).length;}return _ts;}
+function tHas(id){return id===0||tSet().has(id);}
+function tSecDone(k){return TREE.SEC[k].every(tHas);}
+function tGate(n){return n.gate!=null&&!tHas(n.id)&&!tSecDone(n.gate);}
+function tOpen(n){return !tHas(n.id)&&(n.p<0||tHas(n.p))&&n.d<=tMaxD()&&!tGate(n);}
+function tArea(n){return !tHas(n.id)&&n.d>tMaxD();}
+let _TT=null;
+function TT(){if(_TT)return _TT;const t={atk:0,crit:0,rng:0,spd:0,eff:0,elemAll:0,eSpd:0,eHp:0,boss:0,coin:0,wall:0,cd:0,life:0,atkR:Array(RAR.length).fill(0),rngR:Array(RAR.length).fill(0),spdR:Array(RAR.length).fill(0),paintR:Array(RAR.length).fill(0),elem:[0,0,0,0,0]};
+  for(const id of (S.tree||[])){const n=TREE.N[id];if(!n||n.root)continue;const v=tVal(n);if(Array.isArray(t[n.k]))t[n.k][n.q]+=v;else t[n.k]+=v;}
+  for(const k in TREE_CAP)t[k]=Math.min(TREE_CAP[k],t[k]);return _TT=t;}
+function treeApply(o,u){
+  if(!S.tree||!S.tree.length)return;const t=TT(),r=u.r;
+  o.atk=Math.round(o.atk*(1+(t.atk+t.atkR[r])/100));o.rng*=1+(t.rng+t.rngR[r])/100;o.itv/=1+(t.spd+t.spdR[r])/100;
+  o.eff=Math.min(0.95,o.eff+t.eff/100);o.el=o.el.map((x,i)=>Math.round(x*(1+(t.elemAll+t.elem[i])/100)));
+  o.crit=(o.crit||0)+t.crit/100;o.boss=(o.boss||0)+t.boss/100;
+}
+/* ---- 画面 ---- */
+let TV=null;
+function openTree(){
+  if(!S.tree)S.tree=[];
+  const ov=document.createElement('div');ov.id='treeOv';
+  ov.innerHTML=`<canvas></canvas>
+   <div class="trTop"><div class="pill">🪙 <span class="trC"></span></div><div class="pill">🪐 <span class="trN"></span>/${TREE.N.length-1}</div><span class="sp"></span>
+    <button class="btn sm" data-t="sum">効果</button><button class="btn sm p" data-t="close">✕</button></div>
+   <div class="pill trA">🌌 開拓 <span class="trD"></span></div><div class="trZoom"><button class="btn sm" data-t="zin">＋</button><button class="btn sm" data-t="zout">－</button><button class="btn sm" data-t="home" style="font-size:12px">中央</button></div>
+   <div class="trInfo"></div>`;
+  document.body.appendChild(ov);
+  const cvs=ov.querySelector('canvas'),c=cvs.getContext('2d');
+  TV={ov,cvs,c,zoom:44,cx:0,cy:0,sel:0,W:0,H:0,dp:1,dirty:true,t:0,pts:new Map(),moved:0,last:null,pinch:null};
+  const fit=()=>{TV.dp=Math.min(2,devicePixelRatio||1);TV.W=innerWidth;TV.H=innerHeight;cvs.width=TV.W*TV.dp;cvs.height=TV.H*TV.dp;cvs.style.width=TV.W+'px';cvs.style.height=TV.H+'px';TV.dirty=true;};fit();
+  // 次に解放できるノードの近くから表示
+  {const nx=TREE.N.filter(tOpen).sort((a,b)=>a.d-b.d)[0];if(nx&&nx.d>3){TV.cx=nx.x;TV.cy=nx.y;}}
+  trInfo();
+  ov.addEventListener('click',e=>{const b=e.target.closest('[data-t]');if(!b)return;const t=b.dataset.t;
+    if(t==='close'){ov.remove();TV=null;if(curTab==='skill')renderSkills();}
+    if(t==='home'){TV.cx=0;TV.cy=0;TV.zoom=44;TV.dirty=true;}
+    if(t==='zin'){TV.zoom=Math.min(140,TV.zoom*1.3);TV.dirty=true;}
+    if(t==='zout'){TV.zoom=Math.max(6,TV.zoom/1.3);TV.dirty=true;}
+    if(t==='sum')trSummary();
+    if(t==='buy')trBuy();
+    if(t==='go'){const n=TREE.N[+b.dataset.id];TV.sel=n.id;TV.cx=n.x;TV.cy=n.y;TV.zoom=Math.max(TV.zoom,44);TV.dirty=true;trInfo();}});
+  const toW=(px,py)=>({x:(px-TV.W/2)/TV.zoom+TV.cx,y:(py-TV.H/2)/TV.zoom+TV.cy});
+  cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);TV.pts.set(e.pointerId,{x:e.clientX,y:e.clientY});TV.moved=0;
+    if(TV.pts.size===2){const [p1,p2]=[...TV.pts.values()];TV.pinch={d:Math.hypot(p1.x-p2.x,p1.y-p2.y),z:TV.zoom};}});
+  cvs.addEventListener('pointermove',e=>{const p=TV.pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;
+    if(TV.pts.size===1){TV.cx-=dx/TV.zoom;TV.cy-=dy/TV.zoom;TV.moved+=Math.abs(dx)+Math.abs(dy);TV.dirty=true;}
+    p.x=e.clientX;p.y=e.clientY;
+    if(TV.pts.size===2&&TV.pinch){const [p1,p2]=[...TV.pts.values()];TV.zoom=Math.max(6,Math.min(140,TV.pinch.z*Math.hypot(p1.x-p2.x,p1.y-p2.y)/TV.pinch.d));TV.moved=99;TV.dirty=true;}});
+  const up=e=>{const had=TV.pts.has(e.pointerId);TV.pts.delete(e.pointerId);if(TV.pts.size<2)TV.pinch=null;
+    if(had&&TV.moved<8&&e.type==='pointerup'){const w=toW(e.clientX,e.clientY);let best=null,bd=1e9;
+      for(const n of TREE.N){const d=Math.hypot(n.x-w.x,n.y-w.y);if(d<Math.max(n.rad*1.4,14/TV.zoom)&&d<bd){bd=d;best=n;}}
+      if(best){TV.sel=best.id;trInfo();TV.dirty=true;}}};
+  cvs.addEventListener('pointerup',up);cvs.addEventListener('pointercancel',up);
+  cvs.addEventListener('wheel',e=>{e.preventDefault();TV.zoom=Math.max(6,Math.min(140,TV.zoom*(e.deltaY<0?1.12:1/1.12)));TV.dirty=true;},{passive:false});
+  (function loop(){if(!TV)return;if(TV.W!==innerWidth||TV.H!==innerHeight)fit();TV.t+=1/60;trDraw();requestAnimationFrame(loop);})();
+}
+function trInfo(){
+  if(!TV)return;const n=TREE.N[TV.sel],has=tHas(n.id),op=tOpen(n),cost=tCost(n),br=n.b>=0?TREE.BR[n.b]:null;
+  TV.ov.querySelector('.trC').textContent=S.coins.toLocaleString();TV.ov.querySelector('.trN').textContent=(S.tree||[]).length;TV.ov.querySelector('.trD').textContent=`${tMaxD()}/${TREE_MAXD}段`;
+  TV.ov.querySelector('.trInfo').innerHTML=`<div class="trI1"><span class="trDot" style="background:${br?br.col:'#ffd23f'}">${tLabel(n)}</span>
+    <div class="trI2"><b>${n.root?'スタート':tText(n)}</b><small>${br?`${br.n}の星 ・ ${n.d}段目`:'ここから星をつないでいこう！'}</small></div>
+    ${n.root?'':has?'<span class="mut">解放済み</span>':tGate(n)&&tHas(n.p)?`<span class="mut" style="font-size:11px;text-align:center">🔒 ${RAR[n.gate].n}の星を<br>すべて解放すると<br>ひらく</span>`:tArea(n)?`<span class="mut" style="font-size:11px;text-align:center;color:#6a4bd1">🌌 未開拓エリア<br>ステージ <b>${stLbl(tNeedStage(n.d))}</b><br>をクリアで開拓</span>`:op?`<button class="btn y" data-t="buy" ${S.coins<cost?'disabled':''}>解放<br>🪙${cost.toLocaleString()}</button>`:`<span class="mut" style="font-size:11px;text-align:center">🔒 手前の星を<br>解放しよう<br>🪙${cost.toLocaleString()}</span>`}</div>`;
+}
+function trBuy(){
+  const n=TREE.N[TV.sel],cost=tCost(n);if(!tOpen(n)||S.coins<cost)return;
+  S.coins-=cost;S.treeSpent=(S.treeSpent||0)+cost;S.tree.push(n.id);_TT=null;S.st.treeN=S.tree.length;save();
+  const k=n.kids.find(id=>tOpen(TREE.N[id]));
+  TV.burst={x:n.x,y:n.y,t:0,txt:['キラーン!','ピカーン!','シュワッ!'][Math.random()*3|0]};
+  toast(`🪐 ${tText(n)}`,'q');trInfo();TV.dirty=true;
+  if(k!=null&&TREE.N[k].d>0){/* 次のノードを自動で選択 */TV.sel=k;setTimeout(trInfo,0);}
+}
+function trSummary(){
+  const t=TT(),rows=[];const P=(n,v,u,neg)=>v?rows.push(`<div><span>${n}</span><b>${neg?'-':'+'}${v}${u}</b></div>`):0;
+  P('全キャラ火力',t.atk,'%');P('全キャラ射程',t.rng,'%');P('全キャラ攻撃速度',t.spd,'%');P('会心率',t.crit,'%');P('足止め発動率',t.eff,'%');
+  RAR.forEach((x,r)=>{P(`${x.n}の火力`,t.atkR[r],'%');P(`${x.n}の射程`,t.rngR[r],'%');P(`${x.n}の攻撃速度`,t.spdR[r],'%');P(`${x.n}の塗り回数`,t.paintR[r],'回');});
+  P('全属性の特効',t.elemAll,'%');EL.forEach((e,i)=>P(`${e.n}特効`,t.elem[i],'%'));
+  P('敵の移動速度',t.eSpd,'%',1);P('敵のHP',t.eHp,'%',1);P('ボスへのダメージ',t.boss,'%');P('獲得コイン',t.coin,'%');P('壊せる壁の耐久',t.wall,'%');P('スキルのクールタイム',t.cd,'%',1);P('スタート時のライフ',t.life,'');
+  openModal(`<h3>🪐 ギャラクシーの効果</h3><div class="trSum">${rows.join('')||'<div class="mut" style="text-align:center;padding:20px">まだ何も解放していません</div>'}</div>
+   <div class="mut" style="text-align:center;font-size:11px">敵の速度は最大-40%、敵のHPは最大-35%、クールタイムは最大-40%まで</div><div class="mbtns"><button class="btn" data-act="close">閉じる</button></div>`,{});
+}
+const TR_BG=(()=>{let sd=777;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+  const stars=Array.from({length:260},()=>({x:r(),y:r(),s:0.4+Math.pow(r(),3)*2.2,ph:r()*7,c:['#fff','#fff','#cfe0ff','#ffe9b0','#ffc6ec'][r()*5|0]}));
+  const neb=Array.from({length:9},(_,i)=>{const a=i*2.4+r(),d=6+r()*26;return {x:Math.cos(a)*d,y:Math.sin(a)*d,rr:5+r()*9,c:['255,120,200','90,200,255','160,120,255','90,255,200'][i%4]};});
+  return {stars,neb};})();
+function trStar(c,X,Y,R,ri,rot,k){c.beginPath();k=k||5;for(let i=0;i<k*2;i++){const a=rot-Math.PI/2+i*Math.PI/k,rr=i%2?ri:R;i?c.lineTo(X+Math.cos(a)*rr,Y+Math.sin(a)*rr):c.moveTo(X+Math.cos(a)*rr,Y+Math.sin(a)*rr);}c.closePath();}
+function trDraw(){
+  const V=TV;const pulse=(Math.sin(V.t*5)+1)/2;if(!V.dirty&&!V.burst&&V.t%0.1>0.02)return;V.dirty=false;
+  const c=V.c,z=V.zoom,W=V.W,H=V.H;c.setTransform(V.dp,0,0,V.dp,0,0);
+  // ---- 宇宙の背景 ----
+  {const g=c.createLinearGradient(0,0,W*0.4,H);g.addColorStop(0,'#0a0f33');g.addColorStop(0.55,'#141a4d');g.addColorStop(1,'#1d1450');c.fillStyle=g;c.fillRect(0,0,W,H);}
+  const sx=x=>W/2+(x-V.cx)*z,sy=y=>H/2+(y-V.cy)*z;
+  const lite=LT()>=2;
+  if(!lite)for(const nb of TR_BG.neb){const X=sx(nb.x),Y=sy(nb.y),R=nb.rr*z;if(X<-R||X>W+R||Y<-R||Y>H+R)continue;const g=c.createRadialGradient(X,Y,0,X,Y,R);g.addColorStop(0,`rgba(${nb.c},.16)`);g.addColorStop(1,`rgba(${nb.c},0)`);c.fillStyle=g;c.fillRect(X-R,Y-R,R*2,R*2);}
+  {const X=sx(0),Y=sy(0),R=z*22;const g=c.createRadialGradient(X,Y,0,X,Y,R);g.addColorStop(0,'rgba(255,225,150,.55)');g.addColorStop(0.18,'rgba(255,150,210,.25)');g.addColorStop(0.5,'rgba(140,110,255,.12)');g.addColorStop(1,'rgba(140,110,255,0)');c.fillStyle=g;c.fillRect(0,0,W,H);}
+  for(const s of TR_BG.stars){const X=((s.x*W*1.3-V.cx*z*0.12)%W+W)%W,Y=((s.y*H*1.3-V.cy*z*0.12)%H+H)%H,tw=0.45+0.55*Math.abs(Math.sin(V.t*1.3+s.ph));
+    c.globalAlpha=tw;c.fillStyle=s.c;if(s.s>1.8){trStar(c,X,Y,s.s*2,s.s*0.45,0,4);c.fill();}else{c.fillRect(X-s.s/2,Y-s.s/2,s.s,s.s);}}
+  c.globalAlpha=1;
+  const md=tMaxD(),vis=n=>{const X=sx(n.x),Y=sy(n.y);return X>-60&&X<W+60&&Y>-60&&Y<H+60;};
+  // ---- 線 ----
+  c.lineCap='round';
+  for(const n of TREE.N){if(n.p<0)continue;const p=TREE.N[n.p];if(!vis(n)&&!vis(p))continue;const col=TREE.BR[n.b].col,has=tHas(n.id),op=tOpen(n);
+    c.beginPath();c.moveTo(sx(p.x),sy(p.y));c.quadraticCurveTo(sx(n.qx),sy(n.qy),sx(n.x),sy(n.y));
+    if(has){c.globalAlpha=0.3;c.strokeStyle=col;c.lineWidth=Math.max(3,z*0.26);c.stroke();c.globalAlpha=1;c.lineWidth=Math.max(1.2,z*0.08);c.stroke();c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=Math.max(0.6,z*0.025);c.stroke();}
+    else if(op){c.setLineDash([z*0.12,z*0.1]);c.strokeStyle='rgba(255,255,255,.85)';c.lineWidth=Math.max(1,z*0.045);c.stroke();c.setLineDash([]);}
+    else{c.strokeStyle=n.d>md?'rgba(170,140,255,.09)':'rgba(190,205,255,.2)';c.lineWidth=Math.max(0.8,z*0.035);c.stroke();}}
+  // ---- 枝の名前 ----
+  if(false)TREE.BR.forEach(b=>{const x=sx(b.lab.x),y=sy(b.lab.y)-z*0.6;const fs=Math.max(11,Math.min(22,z*0.38));
+    c.font=font(fs);c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.lineWidth=fs*0.32;c.strokeStyle='#0a0f33';c.strokeText(b.n,x,y);c.fillStyle=b.col;c.fillText(b.n,x,y);});
+  // ---- 星のノード ----
+  for(const n of TREE.N){if(!vis(n))continue;const X=sx(n.x),Y=sy(n.y),r=n.rad*z,has=tHas(n.id),op=tOpen(n),col=n.b>=0?TREE.BR[n.b].col:'#ffd23f';
+    const R=r*(n.root?1.75:1.4),rot=n.root?0:((n.id*0.618)%1-0.5)*0.5,ar=n.d>md&&!has;
+    if(r<1.5){c.fillStyle=has?col:op?'#fff':ar?'rgba(170,140,255,.3)':'rgba(200,210,255,.45)';c.fillRect(X-1,Y-1,2,2);continue;}
+    if(r<6||lite){}
+    else if(has||n.root){const g=c.createRadialGradient(X,Y,0,X,Y,R*1.9);g.addColorStop(0,col+'99');g.addColorStop(1,col+'00');c.fillStyle=g;c.fillRect(X-R*1.9,Y-R*1.9,R*3.8,R*3.8);}
+    else if(op){c.globalAlpha=0.25+pulse*0.35;const g=c.createRadialGradient(X,Y,0,X,Y,R*1.8);g.addColorStop(0,'#fff');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(X-R*1.8,Y-R*1.8,R*3.6,R*3.6);c.globalAlpha=1;}
+    trStar(c,X,Y,R,R*(n.root?0.55:0.52),rot);c.lineJoin='round';
+    if(has||n.root){c.fillStyle=col;c.fill();c.lineWidth=Math.max(1.5,z*0.05);c.strokeStyle='#0a0f33';c.stroke();
+      c.fillStyle='rgba(255,255,255,.6)';c.beginPath();c.ellipse(X-R*0.22,Y-R*0.3,R*0.2,R*0.1,-0.6,0,7);c.fill();}
+    else if(op){c.fillStyle='#fffbe8';c.fill();c.lineWidth=Math.max(1.5,z*0.05)+pulse*z*0.05;c.strokeStyle=col;c.stroke();}
+    else if(ar){c.fillStyle='rgba(120,90,210,.14)';c.fill();c.lineWidth=1;c.strokeStyle='rgba(170,140,255,.28)';c.stroke();}
+    else{c.fillStyle='rgba(150,165,230,.22)';c.fill();c.lineWidth=1;c.strokeStyle='rgba(205,215,255,.45)';c.stroke();}
+    if(n.id===V.sel){c.beginPath();c.arc(X,Y,R+z*0.16,0,7);c.setLineDash([z*0.1,z*0.08]);c.lineWidth=Math.max(2,z*0.06);c.strokeStyle='#ffe14d';c.stroke();c.setLineDash([]);}
+    if(r>=7){const lab=tLabel(n),fs=r*(n.root?0.6:lab.length>=3?0.55:lab.length===2?0.72:0.95);c.font=font(fs);c.textAlign='center';c.textBaseline='middle';
+      if(has||n.root){c.lineJoin='round';c.lineWidth=fs*0.3;c.strokeStyle='#0a0f33';c.strokeText(lab,X,Y+r*0.08);c.fillStyle='#fff';c.fillText(lab,X,Y+r*0.08);}
+      else{c.fillStyle=op?'#0a0f33':ar?'rgba(190,170,255,.35)':'rgba(220,228,255,.6)';c.fillText(lab,X,Y+r*0.08);}}}
+  // ---- 解放した時の演出 ----
+  if(V.burst){const b=V.burst;b.t+=1/60;const X=sx(b.x),Y=sy(b.y),p=b.t/0.8;
+    c.fillStyle=`rgba(255,230,120,${1-p})`;for(let i=0;i<10;i++){const a=i*Math.PI/5+p,d=z*(0.5+p*1.4);trStar(c,X+Math.cos(a)*d,Y+Math.sin(a)*d,z*0.18*(1-p*0.5),z*0.07,a,4);c.fill();}
+    c.strokeStyle=`rgba(255,255,255,${1-p})`;c.lineWidth=3;c.beginPath();c.arc(X,Y,z*(0.3+p*1.2),0,7);c.stroke();
+    const fs=Math.max(18,z*0.5)*(p<0.2?0.5+p*2.5:1);c.globalAlpha=Math.max(0,1-Math.max(0,p-0.6)/0.4);c.font=font(fs);c.textAlign='center';c.lineJoin='round';c.lineWidth=fs*0.25;c.strokeStyle='#0a0f33';c.strokeText(b.txt,X,Y-z*0.8-p*20);c.fillStyle='#ffd23f';c.fillText(b.txt,X,Y-z*0.8-p*20);c.globalAlpha=1;
+    if(p>=1)V.burst=null;}
+}
+function treeCard(){const n=(S.tree||[]).length,all=TREE.N.length-1;
+  return `<div class="panel skc" style="background:linear-gradient(135deg,#e7e0ff,#d8ecff)"><div class="skic" style="background:#1d1f5c">🪐</div>
+   <div class="qi"><div class="qt">ギャラクシー <span class="mut">${n}/${all}</span></div><div class="mut" style="font-size:11px">🌌 開拓エリア ${tMaxD()}/${TREE_MAXD}段${tMaxD()<TREE_MAXD?`（次は ${stLbl(tNeedStage(tMaxD()+1))} クリアで拡大）`:'（全エリア開拓！）'}</div><div class="qd">真ん中のSTARTから星をつないで、火力・射程・レアリティ別の強化・敵よわらせ・ボス・コインなどを少しずつ解放！</div>
+   <div class="qbar"><i style="width:${n/all*100}%;background:#a66bff"></i></div></div>
+   <div class="qrw"><button class="btn sm pu" data-tree="1">ひらく</button></div></div>`;}
+
 /* ================= MENU / INBOX ================= */
 const MAILS=[
  {id:'welcome',from:'GD運営チーム',title:'ようこそ！GRID★DEFENSEへ',
@@ -1391,7 +1655,31 @@ const MAILS=[
 【クエスト】
 目標を達成するとチケットなどがもらえます。こまめにチェックしよう！
 
+【ギャラクシー】
+スキルタブの一番下から開けます。真ん中のSTARTから星をつないで、コインで少しずつ強化を解放しよう。ステージをクリアするほど、解放できるエリアが外へ広がります。
+
 演出が長いと感じたら、メニューの「演出スキップ」をONにしてね。`},
+ {id:'galaxy_new',from:'GD運営チーム',title:'【新機能】「ギャラクシー」が登場しました！',
+  body:`いつもGDを遊んでいただき、ありがとうございます！
+
+本日のアップデートで、キャラたちをさらに強くする新機能「ギャラクシー」が登場しました！
+
+スキルタブのいちばん下にある「ギャラクシー」をひらくと、そこには1000個以上の星がうずをまく、ひとつの銀河が広がっています。
+
+真ん中のSTARTから星をひとつずつつないで、コインで解放していきましょう。
+・全キャラの火力・射程・攻撃速度アップ
+・N〜ZRのレアリティごとの強化（塗れる回数アップも！）
+・属性特効、敵の足をおそくする、敵のHPを減らす
+・ボスへのダメージ、獲得コイン、壁の耐久、スキルのクールタイム短縮…などなど
+
+外側の星ほど効果が大きくなりますが、そのぶん必要なコインも増えていきます。
+また、ステージをクリアするほど、解放できる「開拓エリア」が銀河の外側へと広がっていきます。どんどんステージを進めて、銀河の果てを目指してくださいね！
+
+どの方向に星をつないでいくかは、あなたの作戦しだい。自分だけの最強ギャラクシーを作り上げてください！
+
+ささやかですが、ギャラクシー登場を記念してプレゼントをお送りします。ぜひ受け取って、これからの冒険に役立ててください。
+
+これからも GD をよろしくお願いします！`,gift:{ev:2,l:1}},
 ];
 function visMails(){return MAILS.filter(m=>!m.cond||m.cond());}
 function syncMail(){S.mail=S.mail||{};MAILS.forEach(m=>{if(!S.mail[m.id])S.mail[m.id]={read:0,claimed:0};});}
@@ -1461,7 +1749,7 @@ function openMail(id){
      <button class="btn ${st.claimed?'':'p'}" data-act="claim" ${st.claimed?'disabled':''}>${st.claimed?'受け取り済み':'受け取る！'}</button></div>`:''}
    <div class="mbtns"><button class="btn" data-act="back">◀ 受信箱</button><button class="btn" data-act="close">閉じる</button></div>`,
    {back:()=>openInbox(),claim:()=>{if(st.claimed)return;st.claimed=1;const g=m.gift;if(g.c)S.coins+=g.c;if(g.t)S.tickets+=g.t;if(g.l)S.legend=(S.legend||0)+g.l;if(g.ev)S.evTix=(S.evTix||0)+g.ev;save();updateMenuBadge();
-      toast('🎁 受け取りました！ '+[g.c?`🪙${g.c}`:'',g.t?`🎟${g.t}`:'',g.l?`🌟${g.l}`:'',g.ev?'キンキラ挑戦チケット':''].join(' '),'q');openMail(id);if(curTab==='gacha')renderGacha();}});
+      toast('🎁 受け取りました！ '+[g.c?`🪙${g.c}`:'',g.t?`🎟${g.t}`:'',g.l?`🌟${g.l}`:'',g.ev?`キンキラ挑戦チケット×${g.ev}`:''].join(' '),'q');openMail(id);if(curTab==='gacha')renderGacha();}});
 }
 $('#menuBtn').addEventListener('click',()=>openMenu());
 
@@ -1492,6 +1780,10 @@ const QUESTS=[
  {id:'stkZR',t:'伝説のシール',d:'ZRのシールを手に入れる',p:()=>[S.stk.some(k=>k.r>=9)?1:0,1],rw:{l:1}},
  {id:'fuse1',t:'合成マスター',d:'ボールかシールを1回合成する',p:()=>[S.st.fuse||0,1],rw:{t:3}},
  {id:'fuse30',t:'錬金術師',d:'ボール・シールを累計30回合成する',p:()=>[S.st.fuse||0,30],rw:{t:10,c:3000}},
+ {id:'tr10',t:'小さな星座',d:'ギャラクシーの星を10個解放する',p:()=>[(S.tree||[]).length,10],rw:{t:5,c:2000},fixed:1},
+ {id:'tr100',t:'星雲',d:'ギャラクシーの星を100個解放する',p:()=>[(S.tree||[]).length,100],rw:{l:1,t:20},fixed:1},
+ {id:'tr500',t:'大銀河',d:'ギャラクシーの星を500個解放する',p:()=>[(S.tree||[]).length,500],rw:{l:5,t:40},fixed:1},
+ {id:'trAll',t:'宇宙の果てへ',d:'ギャラクシーの星をすべて解放する',p:()=>[(S.tree||[]).length,TREE.N.length-1],rw:{l:10,t:50},fixed:1},
  {id:'wall30',t:'絶対防壁',d:'壁の強化をLv30にする',p:()=>[S.wallLv||0,30],rw:{l:2,t:30},fixed:1},
  {id:'wall10',t:'難攻不落の城',d:'壁の強化をLv10にする',p:()=>[S.wallLv||0,10],rw:{t:10,c:5000}},
  {id:'atk10',t:'底力',d:'全キャラ攻撃力アップをLv10にする',p:()=>[S.atkLv||0,10],rw:{t:5}},
@@ -1558,9 +1850,9 @@ const ET={grunt:{hp:1,sp:0.95,rad:0.27,coin:1},fast:{hp:0.55,sp:1.6,rad:0.22,coi
 const POWS=['POW!','BAM!','ZAP!','WHAM!','BOOM!','KAPOW!','ドカッ!','バキッ!','ズドン!'];
 let B;
 function newField(s){
-  const info=stageInfo(s),segHp=Math.round(info.segHp*wallMul());
+  const info=stageInfo(s),segHp=Math.round(info.segHp*wallMul()*(1+TT().wall/100));
   const segs=[];WALLS.forEach(w=>{for(let k=0;k<2;k++){const cr=[];for(let j=0;j<3;j++)cr.push([rnd(.2,.8),rnd(.1,.9)]);segs.push({r:w.row,c:w.c0+1+2*k,hp:segHp,max:segHp,cr,shk:0});}});
-  B={s,info,mode:'idle',paused:false,speed:B?B.speed:1,wave:0,lives:20,maxLives:20,enemies:[],projs:[],fx:[],queue:[],spawnT:0,spawnItv:1,betweenT:0,inWave:false,
+  B={s,info,mode:'idle',paused:false,speed:B?B.speed:1,wave:0,lives:20+TT().life,maxLives:20+TT().life,enemies:[],projs:[],fx:[],queue:[],spawnT:0,spawnItv:1,betweenT:0,inWave:false,
     segs,flow:null,bf:{},shake:0,earned:0,kills:0,wallBroken:0,banner:null,time:0,def:[],selSlot:-1,
     skCd:{},aim:null,zones:[],sweeps:[],hpRef:ENEMY_BASE.hp*info.hpMul,draft:false,cards:[],
     buff:{atk:0,spd:0,rng:0,elem:0,eff:0,slow:0,cd:0,coin:0}};
@@ -1702,7 +1994,7 @@ function waveCleared(){
 }
 function spawn(sp){
   const c=Math.random()*COLS|0,T=ET[sp.t];
-  B.enemies.push({minor:!!sp.minor,tier:B.ev?Math.min(5,Math.floor(B.wave/10)):enemyTier(B.s),t:sp.t,el:sp.el,hp:sp.hp,max:sp.hp,sp:sp.sp,rad:T.rad,brk:(sp.t==='boss'&&B.s<1&&!B.ev)?0:(T.brk||0),coin:T.coin,
+  B.enemies.push({minor:!!sp.minor,tier:B.ev?Math.min(5,Math.floor(B.wave/10)):enemyTier(B.s),t:sp.t,el:sp.el,hp:Math.round(sp.hp*(1-TT().eHp/100)),max:Math.round(sp.hp*(1-TT().eHp/100)),sp:sp.sp,rad:T.rad,brk:(sp.t==='boss'&&B.s<1&&!B.ev)?0:(T.brk||0),coin:T.coin,
     x:c+0.5,y:-0.5,r:-1,c,nr:0,nc:c,tx:c+0.5,ty:0.5,fd:999,slow:0,stun:0,hitF:0,atkSeg:null,atkT:0,leaving:false,seed:Math.random()*10,swing:0,
     shifts:sp.t==='boss'&&(B.ev?B.wave>=30:B.s>=BOSS_SHIFT.fromStage)?((B.ev?B.wave>=60:B.s>=BOSS_SHIFT.lateStage)?BOSS_SHIFT.lateAt:BOSS_SHIFT.at).slice():null});
 }
@@ -1728,7 +2020,7 @@ function update(dt){
     if(e.dead)continue;
     if(e.hitF>0)e.hitF-=dt; if(e.swing>0)e.swing-=dt*3;
     if(e.stun>0){e.stun-=dt;continue;}
-    let sp=e.sp*zoneSlow(e)*(1-Math.min(60,B.buff.slow)/100); if(e.slow>0){e.slow-=dt;sp*=0.45;}
+    let sp=e.sp*zoneSlow(e)*(1-Math.min(60,B.buff.slow)/100)*(1-TT().eSpd/100); if(e.slow>0){e.slow-=dt;sp*=0.45;}
     if(e.atkSeg){const sg=e.atkSeg;
       if(sg.hp<=0){e.atkSeg=null;decide(e);}
       else{e.atkT-=dt;if(e.atkT<=0){e.atkT=1.0;e.swing=1;damageSeg(sg,e.brk*Math.pow(B.info.segHp/ENEMY_BASE.segHp,DIFF.wallDmgCurve));}}
@@ -1832,7 +2124,7 @@ function dealDmg(e,dmg,col){
 function killEnemy(e){
   {
     e.dead=true;B.kills++;S.st.kills++;
-    let sc=0;for(const id of S.form){if(id==null)continue;const k2=stkOf(UN(id));if(k2&&k2.type==='coin')sc+=stkVal(k2);}
+    let sc=TT().coin;for(const id of S.form){if(id==null)continue;const k2=stkOf(UN(id));if(k2&&k2.type==='coin')sc+=stkVal(k2);}
     const c=Math.round(e.coin*(B.ev?evCoinMul():rGrow(B.s,REWARD.killGrowth))*(1+B.buff.coin/100+sc/100));S.coins+=c;B.earned+=c;
     for(let i=0;i<8;i++)fx({k:'bit',x:e.x,y:e.y,vx:rnd(-3,3),vy:rnd(-3.5,1),life:0.6,col:i%2?(e.el>=0?EL[e.el].c:'#ddd'):'#111',s:rnd(0.06,0.13)});
     fx({k:'ring',x:e.x,y:e.y,life:0.35,col:'#ffd23f',r0:0.1,r1:0.8,w:5});
@@ -1871,7 +2163,7 @@ function win(){
   if(Math.random()<(first?EV_DROP.first:EV_DROP.repeat)){S.evTix=(S.evTix||0)+1;B.evGot=1;}
   S.coins+=coins;S.tickets+=tk;B.earned+=coins;
   if(first&&s===4){S.legend=(S.legend||0)+1;S._z=(S._z||0)+1;B.legendGot=(B.legendGot||0)+1;}
-  if(first)S.cleared=Math.min(MAXST,s+1);
+  if(first){const d0=tMaxD();S.cleared=Math.min(MAXST,s+1);if(tMaxD()>d0)setTimeout(()=>toast(`🌌 ギャラクシーの開拓エリアが ${tMaxD()}段 まで広がった！`,'q'),1800);}
   if(first&&s===14)setTimeout(()=>toast('📬 運営からメッセージが届きました！','q'),2600);
   if(B.wallBroken===0&&s>=1)S.st.noWall++;
   if(B.wallBroken===0&&s>=9)S.st.noWallHard++;
@@ -2023,11 +2315,11 @@ const SKILLS=[
   cd:l=>30-(l-1)*0.75, val:l=>({r:0.8+(l-1)*0.05,dur:2.5+(l-1)*0.25,f:0.55-(l-1)*0.015}),
   info:'タップした場所がネバネバスライムに。中の敵が遅くなる',txt:v=>`範囲${v.r.toFixed(2)}マス・${v.dur.toFixed(1)}秒・敵の速さ${Math.round(v.f*100)}%`},
  {id:'bon',n:'ボン！',ic:'💣',col:'#ff9a3c',cost:400,tgt:'pt',
-  cd:l=>35-(l-1)*0.9, val:l=>({r:0.8+(l-1)*0.04,pw:0.3+(l-1)*0.06}),
-  info:'タップした場所を即座に爆破！',txt:v=>`範囲${v.r.toFixed(2)}マス・ザコHPの${Math.round(v.pw*100)}%ダメージ`},
+  cd:l=>35-(l-1)*0.9, val:l=>({r:0.8+(l-1)*0.04,dmg:Math.round(40*Math.pow(1.3,l-1))}),
+  info:'タップした場所を即座に爆破！',txt:v=>`範囲${v.r.toFixed(2)}マス・${v.dmg.toLocaleString()}ダメージ`},
  {id:'dota',n:'ドタバタ',ic:'💢',col:'#ff5c8a',cost:600,tgt:'row',
-  cd:l=>45-(l-1)*1.1, val:l=>({pw:0.25+(l-1)*0.04,st:0.2+(l-1)*0.03}),
-  info:'タップした横一列をトゲトゲ吹き出しの大群が駆け抜ける',txt:v=>`ザコHPの${Math.round(v.pw*100)}%ダメージ・ひるみ${v.st.toFixed(1)}秒`},
+  cd:l=>45-(l-1)*1.1, val:l=>({dmg:Math.round(30*Math.pow(1.3,l-1)),st:0.2+(l-1)*0.03}),
+  info:'タップした横一列をトゲトゲ吹き出しの大群が駆け抜ける',txt:v=>`${v.dmg.toLocaleString()}ダメージ・ひるみ${v.st.toFixed(1)}秒`},
  {id:'kachi',n:'カチコチ',ic:'🧊',col:'#7fd4ff',cost:500,tgt:'none',
   cd:l=>55-(l-1)*1.3, val:l=>({sh:0.2+(l-1)*0.03,dur:6+(l-1)*0.5}),
   info:'壊れていない「壊せる壁」すべてに一定時間シールド',txt:v=>`耐久 壁の${Math.round(v.sh*100)}%・${v.dur.toFixed(1)}秒`},
@@ -2041,7 +2333,8 @@ const WALLMAX=30;
 function wallMul(){const l=(S&&S.wallLv)||0;return 1+0.15*Math.min(l,10)+0.4*Math.max(0,l-10);}   // Lv10で×2.5、Lv30で×10.5
 function wallCost(l){return Math.round(l<10?400*Math.pow(1.6,l):400*Math.pow(1.6,10)*Math.pow(1.18,l-10));}
 const ATKMAX=100;
-function atkMul(){return 1+0.05*((S&&S.atkLv)||0);}
+const ATKSTEP=0.07;   // 1Lvごとの攻撃力アップ（Lv100で×8）
+function atkMul(){return 1+ATKSTEP*((S&&S.atkLv)||0);}
 function atkCost(l){return Math.round(150*Math.pow(1.08,l));}
 function skillCost(sk,l){return l===0?sk.cost:Math.round(sk.cost*0.5*(1+l*0.6));}
 function skillReady(id){return S.skills[id]>0&&!(B.skCd[id]>0);}
@@ -2080,7 +2373,7 @@ function castSkill(id,x,y){
     pow(x,y-0.2,'ネバ〜ッ!','#b8f04a',1.1);
   }
   if(id==='bon'){
-    const dmg=Math.max(1,Math.round(B.hpRef*v.pw));
+    const dmg=v.dmg;
     for(const e of B.enemies)if(!e.dead&&e.y>-0.3&&Math.hypot(e.x-x,e.y-y)<=v.r+e.rad)dealDmg(e,dmg,'#ff9a3c');
     for(let i=0;i<10;i++){const a=Math.random()*7,d=Math.random()*v.r*0.7;fx({k:'smoke',x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,vx:Math.cos(a)*0.6,vy:-0.6-Math.random(),life:rnd(0.8,1.3),r0:0.2,r1:rnd(0.45,0.75)});}
     for(let i=0;i<14;i++)fx({k:'bit',x,y,vx:rnd(-5,5),vy:rnd(-6,1),life:0.8,col:i%2?'#ff9a3c':'#111',s:rnd(0.08,0.16)});
@@ -2094,10 +2387,10 @@ function castSkill(id,x,y){
     const crowd=[],words=['ドタ','バタ','ドド','ダダッ','!!','ドタ!','バタ!','ズダ'],cols=['#ff9ec0','#ffd23f','#7ff0ff','#b6ff7a','#fff','#ffb36b','#d6b6ff'];
     for(let i=0;i<26;i++)crowd.push({dx:-Math.random()*3.6,dy:(Math.random()-0.5)*0.9,s:0.2+Math.random()*0.22,ph:Math.random()*7,sp:0.9+Math.random()*0.35,txt:words[i%words.length],col:cols[i%cols.length]});
     crowd.push({dx:0.05,dy:0,s:0.48,ph:0,sp:1,txt:'ドタバタ!!',col:'#ff5c8a',lead:1});
-    B.sweeps.push({row,st:v.st,x:-0.8,dmg:Math.max(1,Math.round(B.hpRef*v.pw)),hit:new Set(),crowd,t:0});
+    B.sweeps.push({row,st:v.st,x:-0.8,dmg:v.dmg,hit:new Set(),crowd,t:0});
     B.shake=6;pow(0.6,row+0.5,'ドドドド…','#ffd23f',0.9);
   }
-  B.skCd[id]=sk.cd(l)*(1-Math.min(60,B.buff.cd)/100);B.aim=null;S.st.skillUse++;renderSkillBar();
+  B.skCd[id]=sk.cd(l)*(1-Math.min(60,B.buff.cd)/100)*(1-TT().cd/100);B.aim=null;S.st.skillUse++;renderSkillBar();
 }
 function updateSkills(dt){
   for(const id in B.skCd)if(B.skCd[id]>0)B.skCd[id]=Math.max(0,B.skCd[id]-dt);
@@ -2138,7 +2431,7 @@ function renderSkills(){
   $('#skList').innerHTML=`<div class="panel skc" style="background:#fff6d6"><div class="skic" style="background:#ff5c8a">💪</div>
      <div class="qi"><div class="qt">全キャラ攻撃力アップ <span class="mut">Lv.${al}/${ATKMAX}</span></div>
       <div class="qd">配置した全キャラの攻撃力・属性特効ダメージに倍率がかかる（ずっと有効）</div>
-      <div class="qd"><b>いま ×${atkMul().toFixed(2)}</b>${al<ATKMAX?` <span style="color:#d6336c">→ 次Lv ×${(1+0.05*(al+1)).toFixed(2)}</span>`:''}</div>
+      <div class="qd"><b>いま ×${atkMul().toFixed(2)}</b>${al<ATKMAX?` <span style="color:#d6336c">→ 次Lv ×${(1+ATKSTEP*(al+1)).toFixed(2)}</span>`:''}</div>
       <div class="qbar"><i style="width:${al/ATKMAX*100}%;background:#ff5c8a"></i></div></div>
      <div class="qrw" style="display:flex;flex-direction:column;gap:6px">${al>=ATKMAX?'<span class="mut">MAX</span>':`<button class="btn sm y" data-atk="1" ${S.coins<ac?'disabled':''}>強化<br>🪙${ac.toLocaleString()}</button>${n10>1?`<button class="btn sm" data-atk="${n10}" ${S.coins<c10?'disabled':''} style="font-size:11px">+${n10}Lv<br>🪙${c10.toLocaleString()}</button>`:''}`}</div></div>`+wallCard+SKILLS.map(sk=>{const l=S.skills[sk.id],v=sk.val(Math.max(1,l)),nv=sk.val(Math.min(SKMAX,l+1)),cost=skillCost(sk,l);
     return `<div class="panel skc"><div class="skic" style="background:${sk.col}">${sk.ic}</div>
@@ -2147,7 +2440,7 @@ function renderSkills(){
       <div class="qd"><b>${sk.txt(v)}</b>／CT ${sk.cd(Math.max(1,l)).toFixed(1)}秒</div>
       ${l&&l<SKMAX?`<div class="qd" style="color:#d6336c">次Lv▶ ${sk.txt(nv)}／CT ${sk.cd(l+1).toFixed(1)}秒</div>`:''}
       <div class="qbar"><i style="width:${l/SKMAX*100}%;background:${sk.col}"></i></div></div>
-     <div class="qrw">${l>=SKMAX?'<span class="mut">MAX</span>':`<button class="btn sm ${l?'y':'p'}" data-up="${sk.id}" ${S.coins<cost?'disabled':''}>${l?'強化':'解放'}<br>🪙${cost.toLocaleString()}</button>`}</div></div>`;}).join('')+deckShopCard();
+     <div class="qrw">${l>=SKMAX?'<span class="mut">MAX</span>':`<button class="btn sm ${l?'y':'p'}" data-up="${sk.id}" ${S.coins<cost?'disabled':''}>${l?'強化':'解放'}<br>🪙${cost.toLocaleString()}</button>`}</div></div>`;}).join('')+deckShopCard()+treeCard();
 }
 function deckShopCard(){const n=S.decks.length,full=n>=DECK_MAX;
   return `<div class="panel skc" style="background:#eaffd8"><div class="skic" style="background:#b6ff7a">🗂</div>
@@ -2155,6 +2448,7 @@ function deckShopCard(){const n=S.decks.length,full=n>=DECK_MAX;
    <div class="qbar"><i style="width:${n/DECK_MAX*100}%;background:#5fd35f"></i></div></div>
    <div class="qrw">${full?'<span class="mut">MAX</span>':`<button class="btn sm y" data-deckbuy="1" ${S.coins<DECK_PRICE?'disabled':''}>購入<br>🪙${DECK_PRICE.toLocaleString()}</button>`}</div></div>`;}
 function buyDeck(){if(S.decks.length>=DECK_MAX||S.coins<DECK_PRICE)return false;S.coins-=DECK_PRICE;S.decks.push(null);save();toast(`🗂 編成${S.decks.length}を購入しました！`,'q');return true;}
+$('#skList').addEventListener('click',e=>{if(e.target.closest('[data-tree]'))openTree();});
 $('#skList').addEventListener('click',e=>{const b=e.target.closest('[data-deckbuy]');if(b&&!b.disabled&&buyDeck())renderSkills();});
 $('#skList').addEventListener('click',e=>{const w=e.target.closest('[data-wall]');if(w&&!w.disabled){const l=S.wallLv||0,c=wallCost(l);if(l>=WALLMAX||S.coins<c)return;S.coins-=c;S.wallLv=l+1;toast(`🧱 壁の耐久 ×${wallMul().toFixed(2)}！`,'q');save();renderSkills();if(B.mode==='idle')toIdle();}});
 $('#skList').addEventListener('click',e=>{const a=e.target.closest('[data-atk]');if(a&&!a.disabled){let n=+a.dataset.atk,c=0;for(let k=0;k<n;k++)c+=atkCost((S.atkLv||0)+k);if(S.coins<c||(S.atkLv||0)+n>ATKMAX)return;S.coins-=c;S.atkLv=(S.atkLv||0)+n;toast(`💪 全キャラ攻撃力 ×${atkMul().toFixed(2)}！`,'q');save();renderSkills();return;}});
@@ -2606,6 +2900,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){if(B.mode=
 /* ================= INIT ================= */
 load();
 if(S.sel>Math.min(S.cleared,MAXST-1))S.sel=Math.min(S.cleared,MAXST-1);
+// ギャラクシーの形が変わった時：解放済みの星をリセットしてコインを返す
+if(S.treeV!==3){if(S.tree&&S.tree.length){let rf=S.treeSpent||0;if(!rf)for(const id of S.tree){const n=TREE.N[id];if(n&&!n.root)rf+=tCost(n);}S.treeSpent=0;S.coins+=rf;S.tree=[];_TT=null;setTimeout(()=>toast(`🪐 ギャラクシーが新しくなりました！ 使ったコイン 🪙${rf.toLocaleString()} を返しました`,'q'),1500);}S.treeV=3;save();}
 applyTheme();syncMail();startEmoObserver();newField(S.sel);updateHeader();checkQuests();updateMenuBadge();renderBattleUI();resize();
 if(visMails().some(m=>!S.mail[m.id].read))setTimeout(()=>toast('📬 受信箱にメッセージが届いています（右上の ☰ から）','q'),600);
 requestAnimationFrame(loop);
