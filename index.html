@@ -76,6 +76,9 @@ nav button.on .nb{background:var(--yel);color:#111;}
 #bTop .hud{gap:4px;flex-wrap:nowrap;overflow:hidden;}
 #bTop .hud .pill{font-size:13px;padding:2px 7px;gap:2px;}
 #bTop .ctl{min-width:42px;min-height:38px;padding:2px 6px;font-size:15px;}
+#bTop .ctl.rep{display:flex;flex-direction:column;line-height:1;padding:2px 4px;min-width:44px;}
+#bTop .ctl.rep small{font-size:9px;font-weight:900;margin-top:1px;}
+@media (max-width:420px){#bTop .ctl{min-width:34px;padding:2px 3px;font-size:14px;} #bTop .ctl.rep{min-width:38px;} #bTop .hud .pill{font-size:12px;padding:2px 5px;} #bTop{gap:3px;}}
 #draft{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(255,248,230,.82);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);overflow:hidden;z-index:5;border-radius:14px;}
 #draft.on{display:flex;}
 .dtitle{font-weight:900;font-size:26px;text-align:center;color:#ffd23f;-webkit-text-stroke:1.5px #111;text-shadow:3px 3px 0 #111;transform:rotate(-3deg);animation:mIn .3s;}
@@ -2471,21 +2474,36 @@ function renderBattleUI(){
       <div class="pill">🌊<span id="hWave"></span></div><div class="pill">❤<span id="hLife"></span></div><div class="pill">👾<span id="hEnemy"></span></div></div>
       <button class="btn sm ctl ${B.paused?'y':''}" id="bPause">${B.paused?'▶':'⏸'}</button>
       <button class="btn sm ctl ${['','','c','y','p'][B.speed]}" id="bSpeed">×${B.speed}</button>
+      <button class="btn sm ctl rep" id="bRepair">🧱<small>${B.repUsed?'済':'1000'}</small></button>
       <button class="btn sm ctl" id="bRetreat">🏳</button>`;
     bot.innerHTML=`<div id="skBar"></div>`;
     renderSkillBar();hudCache='';updateHUD();
   }
 }
+// 各ステージで1回だけ：1000コインで壊せる壁を全部修復
+const REPAIR_COST=1000;
+function canRepair(){return B.mode==='run'&&!B.repUsed&&S.coins>=REPAIR_COST&&B.segs.some(sg=>sg.hp<sg.max);}
+function wallRepair(){
+  if(B.mode!=='run'||B.repUsed)return;
+  if(!B.segs.some(sg=>sg.hp<sg.max)){toast('🧱 壁はまだ無傷です','q');return;}
+  if(S.coins<REPAIR_COST){toast(`🪙 コインが足りません（${REPAIR_COST.toLocaleString()}必要）`,'q');return;}
+  S.coins-=REPAIR_COST;B.repUsed=1;save();updateHeader&&updateHeader();
+  B.segs.forEach(sg=>{if(sg.hp<sg.max){sg.hp=sg.max;sg.shk=0.3;fx({k:'num',x:sg.c+0.5,y:sg.r+0.1,life:0.9,text:'トンテン!',col:'#ffd23f',size:0.3});}});
+  B.bf={};B.flow=bfs(GOALS);B.enemies.forEach(e=>{if(e.atkSeg)e.atkSeg=null;});
+  toast('🧱 壁を修復しました！（このステージではもう使えません）','q');renderBattleUI();
+}
 let hudCache='';
 function updateHUD(){
   if(B.mode==='idle')return;
-  const s=`${B.ev?B.wave+'/∞':Math.min(B.wave,B.info.waves)+'/'+B.info.waves}|${B.lives}|${B.enemies.length+B.queue.length}`;
-  if(s===hudCache)return;hudCache=s;const [a,b,c]=s.split('|');
+  const s=`${B.ev?B.wave+'/∞':Math.min(B.wave,B.info.waves)+'/'+B.info.waves}|${B.lives}|${B.enemies.length+B.queue.length}|${canRepair()?1:0}`;
+  if(s===hudCache)return;hudCache=s;
+  {const rb=$('#bRepair');if(rb){rb.disabled=!canRepair();rb.classList.toggle('y',canRepair());}}const [a,b,c]=s.split('|');
   const w=$('#hWave');if(w){w.textContent=a;$('#hLife').textContent=b;$('#hEnemy').textContent=c;}
 }
 $('#bTop').addEventListener('click',e=>{
   const id=e.target.closest('button')&&e.target.closest('button').id;
   if(id==='bPause'||id==='bSpeed'||id==='bRetreat'){ctlClick(id);return;}
+  if(id==='bRepair'){wallRepair();return;}
   if(e.target.closest('#stName')){openStageList(0);return;}
   if(id==='stPrev'&&S.sel>0){S.sel--;save();toIdle();}
   if(id==='stNext'&&S.sel<Math.min(S.cleared,MAXST-1)){S.sel++;save();toIdle();}
